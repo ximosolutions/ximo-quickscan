@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {researchPrompt,validateResearch} from '../src/route1.js';
 test('prompt requires independent sources, competitor research, actual dated downloadable JSON',()=>{
  const p=researchPrompt('Isorama BV','https://isorama.nl');
- for(const term of ['FASE 2','concurrenten','onafhankelijke bronnen','downloadbaar UTF-8 JSON-bestand','JJJJMMDD - Isorama BV','version 2']) assert.ok(p.includes(term),term);
+ for(const term of ['ONDERZOEK 2 — MARKT','concurrenten','onafhankelijke','downloadbaar','YYYYMMDD-HHMMSS','version:2']) assert.ok(p.includes(term),term);
  assert.ok(p.includes('\n'));
 });
 test('research v2 accepts market, competitors and qualitative scores',()=>{
