@@ -10,7 +10,7 @@ export function buildReports({ company, website, research, opportunities }) {
     ...item, sourceRefs: [...(item.sourceRefs || [])]
   }));
   const common = { company: safeText(company), website: safeText(website), chapters: [...CHAPTERS],
-    summary: safeText(research?.summary), warnings: qa.warnings };
+    summary: safeText(research?.summary), market: Array.isArray(research?.market)?research.market:[], competitors:Array.isArray(research?.competitors)?research.competitors:[], sources:Array.isArray(research?.sources)?research.sources:[], warnings: qa.warnings };
   return {
     customer: { ...common, audience: 'customer', opportunities: customer,
       disclaimer: 'Kansen en impact zijn indicatief en worden tijdens een gesprek gevalideerd.' },
