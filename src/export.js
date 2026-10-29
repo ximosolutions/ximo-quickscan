@@ -42,6 +42,39 @@ function pdfDocument(pages,width,height) {
     if(dark){
       rect(out,width-18,0,18,height,lime);
       rect(out,width*.79,0,width*.11,height*.57,'0.09 0.22 0.28');
+      // Ximo Intro signature: luminous starbursts, connected constellation and orbital nodes.
+      // All motifs stay in the right-hand visual zone, away from the title.
+      const motif = (x,y,r,filled=false) => {
+        out.push(filled ? '0.71 1 0.45 rg' : '0.71 1 0.45 RG', filled ? '' : '1.2 w');
+        const pts=[];
+        for(let j=0;j<16;j++){
+          const angle=j*Math.PI/8, rr=j%2===0?r:r*.19;
+          pts.push([x+Math.cos(angle)*rr,y+Math.sin(angle)*rr]);
+        }
+        out.push(pts.map((p,j)=>p[0].toFixed(2)+' '+p[1].toFixed(2)+(j?' l':' m')).join(' ')+' h '+(filled?'f':'S'));
+      };
+      const dot=(x,y,r,color='0.71 1 0.45')=>{
+        const k=.55228475;
+        out.push(color+' rg', (x+r)+' '+y+' m '+(x+r)+' '+(y+k*r)+' '+(x+k*r)+' '+(y+r)+' '+x+' '+(y+r)+' c '+(x-k*r)+' '+(y+r)+' '+(x-r)+' '+(y+k*r)+' '+(x-r)+' '+y+' c '+(x-r)+' '+(y-k*r)+' '+(x-k*r)+' '+(y-r)+' '+x+' '+(y-r)+' c '+(x+k*r)+' '+(y-r)+' '+(x+r)+' '+(y-k*r)+' '+(x+r)+' '+y+' c f');
+      };
+      const points=wide
+        ? [[.75,.77],[.88,.83],[.92,.59],[.76,.42],[.89,.27],[.69,.19]]
+        : [[.79,.78],[.91,.85],[.94,.64],[.80,.46],[.92,.28],[.74,.18]];
+      out.push('0.22 0.45 0.41 RG','0.9 w');
+      for(let j=0;j<points.length-1;j++){
+        const a=points[j],b=points[j+1];
+        out.push((a[0]*width)+' '+(a[1]*height)+' m '+(b[0]*width)+' '+(b[1]*height)+' l S');
+      }
+      points.forEach(([px,py],j)=>dot(px*width,py*height,j%2?3.5:2.3));
+      motif(width*.81,height*.70,wide?25:18);
+      motif(width*.92,height*.38,wide?15:12,true);
+      motif(width*.70,height*.88,wide?9:7,true);
+      // Soft green corner panels and small bright particles, not a solid color strip alone.
+      rect(out,width*.70,height*.05,width*.16,height*.015,'0.71 1 0.45');
+      for(let j=0;j<16;j++){
+        const x=width*(.68+(j*37%29)/100),y=height*(.12+(j*19%76)/100);
+        dot(x,y,j%3===0?1.8:.9,j%4===0?'0.71 1 0.45':'0.22 0.48 0.42');
+      }
       // geometric orbit rings, as in the Ximo Intro visual language
       for(let radius=70;radius<340;radius+=90){
         const cx=width*.91,cy=height*.56;
