@@ -34,7 +34,7 @@ export function normalizeOpportunity(item, index = 0) {
     confidence: text(item.confidence) ? item.confidence.trim() : 'Te verifiëren',
     verificationNote: text(item.verificationNote) ? item.verificationNote.trim() : '',
     internalSolution: text(item.internalSolution) ? item.internalSolution.trim() : '',
-    sourceRefs: Array.isArray(item.sourceRefs) ? [...new Set(item.sourceRefs.filter(ref=>text(ref)&&/^https?:\/\//i.test(ref.trim())).map(ref=>ref.trim()))] : [],
+    sourceRefs: Array.isArray(item.sourceRefs) ? [...new Set(item.sourceRefs.filter(text).map(ref=>ref.trim()))] : [],
     evidenceType: text(item.evidenceType) ? item.evidenceType.trim() : 'hypothese',
     scores: normalizeScores(item.scores),
     selected: item.selected !== false
@@ -92,6 +92,7 @@ export function opportunityQuality(item, research) {
   if (!item.benefits?.trim()) issues.push('Verwacht voordeel ontbreekt.');
   if (!item.verificationNote?.trim()) issues.push('Verificatievraag ontbreekt.');
   if (!refs.length) issues.push('Geen bronverwijzingen.');
+  else if(refs.some(ref=>!/^https?:\/\//i.test(ref))) issues.push('Bronverwijzing bevat geen volledige http(s)-URL.');
   else if (!linked) issues.push('Geen bron gekoppeld aan de bronnenlijst.');
   if (['hypothese','afleiding'].includes(item.evidenceType)) issues.push('Nog niet als bedrijfsfeit bevestigd.');
   if (['relevance','impact','feasibility','evidence'].some(key=>!Number.isInteger(item.scores?.[key]))) issues.push('Prioriteitsscores onvolledig.');
