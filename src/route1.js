@@ -5,15 +5,15 @@ const text = x => typeof x === 'string' && x.trim().length > 0;
 
 export function validateResearch(data) {
   if (!record(data)) throw new ContractError('Onderzoek moet een JSON-object zijn.', 'INVALID_SHAPE');
-  if (data.schema !== 'ximo-research' || data.version !== 1) {
-    throw new ContractError('Verwacht onderzoek met schema ximo-research, versie 1.', 'UNSUPPORTED_RESEARCH');
+  if (data.schema !== 'ximo-research' || ![1, 2].includes(data.version)) {
+    throw new ContractError('Verwacht onderzoek met schema ximo-research, versie 1 of 2.', 'UNSUPPORTED_RESEARCH');
   }
   if (!text(data.company) || !Array.isArray(data.opportunities)) {
     throw new ContractError('Bedrijfsnaam of kansenlijst ontbreekt.', 'INVALID_RESEARCH');
   }
   const opportunities = data.opportunities.map((item, index) => normalizeOpportunity(item, index));
   return { company: data.company.trim(), website: text(data.website) ? data.website.trim() : '',
-    summary: text(data.summary) ? data.summary.trim() : '', opportunities, original: data };
+    summary: text(data.summary) ? data.summary.trim() : '', market: Array.isArray(data.market) ? data.market : [], competitors: Array.isArray(data.competitors) ? data.competitors : [], sources: Array.isArray(data.sources) ? data.sources : [], opportunities, original: data };
 }
 
 export function normalizeOpportunity(item, index = 0) {
@@ -29,6 +29,8 @@ export function normalizeOpportunity(item, index = 0) {
     verificationNote: text(item.verificationNote) ? item.verificationNote.trim() : '',
     internalSolution: text(item.internalSolution) ? item.internalSolution.trim() : '',
     sourceRefs: Array.isArray(item.sourceRefs) ? item.sourceRefs.filter(text) : [],
+    evidenceType: text(item.evidenceType) ? item.evidenceType.trim() : 'hypothese',
+    scores: record(item.scores) ? item.scores : {},
     selected: item.selected !== false
   };
 }
@@ -44,6 +46,7 @@ export function checkOpportunities(items) {
     if (!text(item.title)) errors.push('Een geselecteerde kans mist een titel.');
     if (!text(item.painPoint) || !text(item.benefits)) warnings.push('Vul pijnpunt en voordeel aan bij: ' + item.title);
     if (!item.sourceRefs?.length) warnings.push('Geen bronverwijzing bij: ' + item.title);
+    if (item.evidenceType === 'hypothese') warnings.push('Hypothese, nog niet bevestigd: ' + item.title);
   }
   return { errors, warnings, selected };
 }
@@ -55,37 +58,34 @@ export function customerOpportunities(items) {
 export function researchPrompt(company, website) {
   if (!text(company) || !text(website)) throw new Error('Bedrijfsnaam en website zijn vereist.');
   const example = {
-    schema: 'ximo-research', version: 1, company: company.trim(), website: website.trim(),
-    summary: 'Onderbouwde samenvatting van bedrijf, markt en concurrentie, met bronverwijzingen en onzekerheden.',
-    opportunities: [{
-      id: 'k1', title: 'Korte naam van de kans',
-      painPoint: 'Mogelijk pijnpunt; benoem expliciet wanneer dit een hypothese is',
-      benefits: 'Verwachte kwalitatieve voordelen',
-      impactSummary: 'Kwalitatieve impact zonder financiële bedragen',
-      feasibilitySummary: 'Globale haalbaarheid en randvoorwaarden',
-      confidence: 'Brongebaseerd of hypothese',
-      verificationNote: 'Wat bij de klant moet worden geverifieerd',
-      sourceRefs: ['https://voorbeeld.nl/bron'],
-      internalSolution: 'Uitsluitend intern: mogelijke oplossingsrichting'
-    }]
+    schema:'ximo-research',version:2,company:company.trim(),website:website.trim(),
+    summary:'Beknopte synthese met feiten, aannames en beperkingen',
+    market:[{trend:'Relevante brancheontwikkeling',evidenceType:'feit',sourceRefs:['https://bron.example/onderzoek']}],
+    competitors:[{name:'Vergelijkbaar bedrijf',comparison:'Controleerbaar publiek verschil',sourceRefs:['https://bron.example/concurrent']}],
+    sources:[{url:'https://bron.example/onderzoek',title:'Titel',publisher:'Uitgever',accessedOn:'YYYY-MM-DD'}],
+    opportunities:[{id:'k1',title:'Kans',painPoint:'Hypothese over pijnpunt',benefits:'Kwalitatieve voordelen',
+      impactSummary:'Kwalitatieve impact, geen bedragen',feasibilitySummary:'Haalbaarheid en randvoorwaarden',
+      confidence:'middel',evidenceType:'hypothese',verificationNote:'Concrete vraag voor klantgesprek',
+      sourceRefs:['https://bron.example/onderzoek'],internalSolution:'Alleen intern: oplossingsrichting',
+      scores:{relevance:3,impact:3,feasibility:3,evidence:2}}]
   };
   return [
-    'Je bent een onafhankelijke bedrijfs- en marktanalist voor Ximo Solutions. Voer diepgaand extern onderzoek uit naar ' + company.trim() + '. De opgegeven bedrijfswebsite (' + website.trim() + ') is slechts het STARTPUNT, niet de enige bron.',
+    'XIMO RESEARCH ENGINE V1 — onafhankelijk bedrijfs-, markt- en concurrentieonderzoek.',
+    'Doelbedrijf: '+company.trim()+'. Bedrijfswebsite: '+website.trim()+'. De bedrijfswebsite is uitsluitend het STARTPUNT.',
     '',
-    'ONDERZOEKSAANPAK (verplicht):',
-    '1. Onderzoek de bedrijfswebsite voor activiteiten, diensten, klanten, positionering en concrete feiten.',
-    '2. Zoek DAARNAAST actief naar onafhankelijke externe bronnen: brancheorganisaties, sectorrapporten, nieuwsmedia, openbare registers, vakpublicaties, concurrentiewebsites en relevante publieke bedrijfsprofielen.',
-    '3. Onderzoek de Nederlandse markt en actuele ontwikkelingen in de relevante branche, inclusief digitalisering, automatisering, AI, regelgeving en operationele uitdagingen waar toepasselijk.',
-    '4. Identificeer relevante concurrenten of vergelijkbare bedrijven en vergelijk hun openbare positionering, dienstverlening en digitaliseringssignalen. Doe geen ongefundeerde claims over hun interne processen.',
-    '5. Verbind marktinzichten aan 5 tot 8 relevante AI- en automatiseringskansen. Rangschik op verwachte waarde en haalbaarheid. Formuleer pijnpunten als hypothese tenzij er direct bewijs is.',
-    '6. Controleer meerdere bronnen waar mogelijk. Geef per kans concrete, controleerbare URL-verwijzingen in sourceRefs; verzin nooit bronnen of URL’s. Als externe bronnen ontbreken, vermeld dat duidelijk en verlaag de zekerheid.',
-    '7. Maak expliciet onderscheid tussen geverifieerde feiten, redelijke afleidingen en aannames die tijdens een klantgesprek geverifieerd moeten worden. Verzin geen interne bedrijfsgegevens, tools, personeelsaantallen, budgetten, besparingen of ROI.',
+    'Werk in deze volgorde; formuleer pas kansen nadat de eerste twee fasen zijn afgerond:',
+    'FASE 1 — BEDRIJF: controleer activiteiten, doelgroep, diensten en positionering via de eigen website en waar mogelijk onafhankelijke bronnen. Verzin geen interne processen.',
+    'FASE 2 — MARKT EN CONCURRENTIE: zoek actief buiten de eigen website naar brancheorganisaties, vakmedia, sectorrapporten, nieuws, openbare registers en concurrenten. Onderzoek trends in Nederland, digitalisering, AI, regelgeving en aantoonbare ontwikkelingen. Vermeld relevante concurrenten met concrete vergelijkingspunten. Als externe bronnen niet beschikbaar zijn, zeg dat expliciet.',
+    'FASE 3 — PIJNPUNTEN: onderscheid per signaal feit (direct verifieerbaar), afleiding (redelijk onderbouwd) en hypothese (nog onbevestigd). Presenteer mogelijke interne knelpunten nooit als vaststaande feiten.',
+    'FASE 4 — KANSEN: formuleer maximaal 8, bij voorkeur 5–8, maar verzin geen extra kansen om een minimum te halen. Vermijd generieke chatbot- of automatiseringsideeën zonder aantoonbare relatie met de context. Geef per kans: aanleiding, pijnpunt, voordeel, haalbaarheid, bronverwijzingen, interne oplossingsrichting en een concrete verificatievraag voor het verkoopgesprek.',
+    'FASE 5 — PRIORITERING: score relevantie, impact, haalbaarheid en bewijssterkte elk van 1 tot 5. Dit zijn onderbouwde kwalitatieve inschattingen, geen meetresultaten. Rangschik de kansen op verwachte waarde, haalbaarheid en bewijssterkte; vermeld belangrijke onzekerheden.',
     '',
-    'UITVOER: maak een echt downloadbaar UTF-8 JSON-bestand aan, niet alleen een JSON-antwoord in de chat.',
-    'Bestandsnaam: JJJJMMDD - KLANTNAAM - ximo-research.json. Gebruik de WERKELIJKE datum waarop je het bestand maakt (YYYYMMDD, acht cijfers), gevolgd door spatie-streepje-spatie en de opgegeven bedrijfsnaam. Maak uitsluitend ongeldige bestandsnaamtekens veilig. Voorbeeld van de naamopbouw: 20261029 - Isorama BV - ximo-research.json. Het voorbeeld is GEEN vaste datum.',
-    'Gebruik exact het onderstaande JSON-contract met 5 tot 8 volledige kansen, unieke IDs en zonder extra tekst buiten het bestand:',
-    JSON.stringify(example, null, 2),
-    'Vul summary met een bondige maar inhoudelijke synthese van bedrijf, markt, concurrenten, relevante trends, onzekerheden en bronnen. Vul alle kansvelden betekenisvol in; gebruik echte bron-URL’s in sourceRefs waar beschikbaar.',
-    'Bied het bestand direct als downloadbare bijlage/link aan. Geen markdown-codeblok, JSONL of ZIP. Als je geen bestand kunt aanmaken, zeg dat expliciet en geef het volledige geldige JSON-object als terugvaloptie.'
-  ].join('\n');
+    'BRONNEN EN BETROUWBAARHEID: gebruik echte, controleerbare URL’s; verzin nooit URL’s, citaten of feiten. Gebruik waar mogelijk meerdere onafhankelijke bronnen. Een eigen bedrijfswebsite telt niet als onafhankelijke bron. Maak zichtbaar wanneer bronnen ontbreken of tegenstrijdig zijn. Als je geen internettoegang hebt, meld dat en doe geen alsof-onderzoek.',
+    'PRIVACY EN FINANCIËN: gebruik alleen openbare informatie, geen verzonnen klantinterne feiten, financiële bedragen, besparingen of ROI. Geef geen concrete technische implementatiedetails in klantgerichte tekst; internalSolution is uitsluitend voor intern gebruik.',
+    '',
+    'BESTAND: maak daadwerkelijk een downloadbaar UTF-8 JSON-bestand als bijlage, niet alleen een codeblok. Bestandsnaam: JJJJMMDD - '+company.trim()+' - ximo-research.json. Gebruik de ECHTE aanmaakdatum in YYYYMMDD, niet een voorbeelddatum. Vervang ongeldige bestandsnaamtekens veilig.',
+    'JSON-CONTRACT: lever een geldig JSON-object volgens dit schema (version 2). Vul alle onderdelen inhoudelijk in; neem alle gevonden bronnen op in sources. Gebruik unieke kans-IDs en voor scores alleen gehele getallen 1–5. Voor evidenceType gebruik feit, afleiding of hypothese:',
+    JSON.stringify(example,null,2),
+    'Geef alleen een korte bevestiging en een downloadlink naar het bestand. Geen ZIP, JSONL of markdown-codeblok. Als bestandsgeneratie niet mogelijk is, meld dat expliciet en geef het volledige JSON-object als terugvaloptie.'
+  ].join('\\n');
 }
