@@ -4,7 +4,8 @@ Status bijgewerkt: 29 oktober 2026. Dit is een werkchecklist, geen claim dat ond
 
 ## Fase 1 — Stabiliteit
 - [x] Basisregressietests aanwezig (6 tests)
-- [x] Tests uitgebreid naar 12 scenario's (commit a76a334)
+- [x] Tests uitgebreid naar 14 scenario's (inclusief sessieherstel)
+- [x] GitHub Actions-testworkflow toegevoegd (draait bij push en pull request)
 - [ ] Alle tests daadwerkelijk uitvoeren en fouten herstellen
 - [ ] Browsercontrole van stappen Start → Onderzoek → Kansen → Rapport
 - [ ] Controleren dat wijzigingen eerdere rapportgoedkeuringen ongeldig maken
@@ -20,9 +21,9 @@ Status bijgewerkt: 29 oktober 2026. Dit is een werkchecklist, geen claim dat ond
 - [ ] Mobiele en toetsenbordbediening nalopen
 
 ## Fase 4 — Werk bewaren
-- [ ] Downloadbaar sessiebestand (JSON) ontwerpen en bouwen
-- [ ] Bestaande sessie veilig opnieuw importeren
-- [ ] Validatie, versiebeheer en privacy van sessiebestanden testen
+- [x] Downloadbaar sessiebestand (JSON) gebouwd
+- [x] Sessie-import met schema- en versiecontrole gebouwd; goedkeuringen worden gereset
+- [ ] Sessiebestanden end-to-end testen en privacycontrole uitvoeren
 
 ## Fase 5 — Route 1 acceptatie
 - [ ] Alle geautomatiseerde tests groen
