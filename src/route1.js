@@ -54,5 +54,38 @@ export function customerOpportunities(items) {
 
 export function researchPrompt(company, website) {
   if (!text(company) || !text(website)) throw new Error('Bedrijfsnaam en website zijn vereist.');
-  return `Onderzoek het bedrijf ${company} (website: ${website}) op basis van publiek beschikbare bronnen. Maak onderscheid tussen controleerbare feiten, hypotheses en te verifiëren aannames. Geef een brede lijst van 5 tot 8 concrete AI- en automatiseringskansen op basis van mogelijke pijnpunten en verwachte voordelen. Verzín geen interne bedrijfsfeiten of financiële bedragen. Lever UITSLUITEND een geldig JSON-object met exact deze basisstructuur: {"schema":"ximo-research","version":1,"company":"${company}","website":"${website}","summary":"korte onderbouwde context","opportunities":[{"id":"k1","title":"kans","painPoint":"mogelijk pijnpunt","benefits":"verwachte voordelen","impactSummary":"kwalitatieve impact","feasibilitySummary":"globale haalbaarheid","confidence":"hypothese of brongebaseerd","verificationNote":"wat bij klant verifiëren","sourceRefs":["bron URL of duidelijke verwijzing"],"internalSolution":"alleen intern, hoog-over mogelijke oplossingsrichting"}]}. Gebruik voor alle kansen unieke IDs. Maak daadwerkelijk een downloadbaar UTF-8 JSON-bestand aan met de bestandsnaam JJJJMMDD - KLANTNAAM - ximo-research.json, waarbij JJJJMMDD de werkelijke datum op de dag van aanmaken is (bijvoorbeeld 20261029), en KLANTNAAM de bedrijfsnaam is zoals opgegeven, geschikt gemaakt voor een bestandsnaam (vervang ongeldige tekens door een koppelteken). Zet de datum altijd helemaal vooraan, gevolgd door spatie-streepje-spatie, de klantnaam en spatie-streepje-spatie en bied dit als bestand/bijlage aan, zodat ik het direct kan downloaden en in Ximo Quickscan kan importeren. Schrijf het volledige geldige JSON-object naar dat bestand (geen JSONL, geen ZIP, geen markdown). Toon daarnaast hooguit een korte bevestiging met de downloadlink. Als je geen bestand kunt aanmaken, meld dat expliciet en geef het volledige JSON-object zonder markdown-codeblok als terugvaloptie.`;
+  const example = {
+    schema: 'ximo-research', version: 1, company: company.trim(), website: website.trim(),
+    summary: 'Onderbouwde samenvatting van bedrijf, markt en concurrentie, met bronverwijzingen en onzekerheden.',
+    opportunities: [{
+      id: 'k1', title: 'Korte naam van de kans',
+      painPoint: 'Mogelijk pijnpunt; benoem expliciet wanneer dit een hypothese is',
+      benefits: 'Verwachte kwalitatieve voordelen',
+      impactSummary: 'Kwalitatieve impact zonder financiële bedragen',
+      feasibilitySummary: 'Globale haalbaarheid en randvoorwaarden',
+      confidence: 'Brongebaseerd of hypothese',
+      verificationNote: 'Wat bij de klant moet worden geverifieerd',
+      sourceRefs: ['https://voorbeeld.nl/bron'],
+      internalSolution: 'Uitsluitend intern: mogelijke oplossingsrichting'
+    }]
+  };
+  return [
+    'Je bent een onafhankelijke bedrijfs- en marktanalist voor Ximo Solutions. Voer diepgaand extern onderzoek uit naar ' + company.trim() + '. De opgegeven bedrijfswebsite (' + website.trim() + ') is slechts het STARTPUNT, niet de enige bron.',
+    '',
+    'ONDERZOEKSAANPAK (verplicht):',
+    '1. Onderzoek de bedrijfswebsite voor activiteiten, diensten, klanten, positionering en concrete feiten.',
+    '2. Zoek DAARNAAST actief naar onafhankelijke externe bronnen: brancheorganisaties, sectorrapporten, nieuwsmedia, openbare registers, vakpublicaties, concurrentiewebsites en relevante publieke bedrijfsprofielen.',
+    '3. Onderzoek de Nederlandse markt en actuele ontwikkelingen in de relevante branche, inclusief digitalisering, automatisering, AI, regelgeving en operationele uitdagingen waar toepasselijk.',
+    '4. Identificeer relevante concurrenten of vergelijkbare bedrijven en vergelijk hun openbare positionering, dienstverlening en digitaliseringssignalen. Doe geen ongefundeerde claims over hun interne processen.',
+    '5. Verbind marktinzichten aan 5 tot 8 relevante AI- en automatiseringskansen. Rangschik op verwachte waarde en haalbaarheid. Formuleer pijnpunten als hypothese tenzij er direct bewijs is.',
+    '6. Controleer meerdere bronnen waar mogelijk. Geef per kans concrete, controleerbare URL-verwijzingen in sourceRefs; verzin nooit bronnen of URL’s. Als externe bronnen ontbreken, vermeld dat duidelijk en verlaag de zekerheid.',
+    '7. Maak expliciet onderscheid tussen geverifieerde feiten, redelijke afleidingen en aannames die tijdens een klantgesprek geverifieerd moeten worden. Verzin geen interne bedrijfsgegevens, tools, personeelsaantallen, budgetten, besparingen of ROI.',
+    '',
+    'UITVOER: maak een echt downloadbaar UTF-8 JSON-bestand aan, niet alleen een JSON-antwoord in de chat.',
+    'Bestandsnaam: JJJJMMDD - KLANTNAAM - ximo-research.json. Gebruik de WERKELIJKE datum waarop je het bestand maakt (YYYYMMDD, acht cijfers), gevolgd door spatie-streepje-spatie en de opgegeven bedrijfsnaam. Maak uitsluitend ongeldige bestandsnaamtekens veilig. Voorbeeld van de naamopbouw: 20261029 - Isorama BV - ximo-research.json. Het voorbeeld is GEEN vaste datum.',
+    'Gebruik exact het onderstaande JSON-contract met 5 tot 8 volledige kansen, unieke IDs en zonder extra tekst buiten het bestand:',
+    JSON.stringify(example, null, 2),
+    'Vul summary met een bondige maar inhoudelijke synthese van bedrijf, markt, concurrenten, relevante trends, onzekerheden en bronnen. Vul alle kansvelden betekenisvol in; gebruik echte bron-URL’s in sourceRefs waar beschikbaar.',
+    'Bied het bestand direct als downloadbare bijlage/link aan. Geen markdown-codeblok, JSONL of ZIP. Als je geen bestand kunt aanmaken, zeg dat expliciet en geef het volledige geldige JSON-object als terugvaloptie.'
+  ].join('\n');
 }
