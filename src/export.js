@@ -53,7 +53,7 @@ function pdfDocument(pages,width,height) {
       txt(out,'/ SOLUTIONS',margin+(wide?82:64),height-53,wide?20:16,lime,true);
       txt(out,(index===0?'01 / INTRODUCTIE':'06 / VERVOLG & GESPREK'),margin,height-115,10,lime,true);
       const heading=entries.find(e=>e.title)?.text||'Quickscan';
-      if(pageIndex===0){
+      if(index===0){
         txt(out,'AI-kansen voor',margin,height-(wide?185:200),wide?43:31,'1 1 1',true);
         const company=entries.find(e=>/^Bedrijf:/.test(e.text))?.text.replace(/^Bedrijf:\s*/,'')||'uw organisatie';
         paragraph(out,company,margin,height-(wide?245:245),width*.65,wide?37:27,wide?44:35,2,'0.71 1 0.45',true);
