@@ -100,6 +100,19 @@ function renderOpportunities() {
     scoreInfo.className='muted tiny';
     scoreInfo.textContent=priority.complete?'Indicatieve prioriteit: '+priority.score+'/100 · '+priority.label:'Prioriteit nog niet beoordeeld · scores ontbreken';
     info.append(scoreInfo);
+    if(priority.complete){
+      const priorityTrack=document.createElement('div');
+      priorityTrack.className='opportunity-priority-track';
+      priorityTrack.setAttribute('role','meter');
+      priorityTrack.setAttribute('aria-label','Indicatieve prioriteit '+item.title);
+      priorityTrack.setAttribute('aria-valuemin','0');
+      priorityTrack.setAttribute('aria-valuemax','100');
+      priorityTrack.setAttribute('aria-valuenow',String(priority.score));
+      const priorityFill=document.createElement('span');
+      priorityFill.style.width=priority.score+'%';
+      priorityTrack.append(priorityFill);
+      info.append(priorityTrack);
+    }
     const quality=opportunityQuality(item,session.research);
     const qualityInfo=document.createElement('p');
     qualityInfo.className='tiny '+(quality.status==='Gegevens aanwezig'?'ok':quality.status==='Verificatie nodig'?'warn':'error');
