@@ -6,7 +6,7 @@ export function buildReports({ company, website, research, opportunities }) {
   const qa = checkOpportunities(opportunities);
   if (qa.errors.length) throw new Error(qa.errors.join(' '));
   const customer = customerOpportunities(opportunities);
-  const internal = qa.selected.map(item => ({
+  const internal = opportunities.map(item => ({
     ...item, sourceRefs: [...(item.sourceRefs || [])]
   }));
   const common = { company: safeText(company), website: safeText(website), chapters: [...CHAPTERS],
