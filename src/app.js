@@ -33,6 +33,9 @@ function highestAvailableStep() {
 function show(step) {
   if (step > highestAvailableStep()) return;
   currentStep = step;
+  const progress = $('progressTop');
+  progress.style.width = ((step + 1) / 4 * 100) + '%';
+  progress.setAttribute('aria-valuenow', String(step + 1));
   for (let i = 0; i < 4; i++) {
     $('page' + i).classList.toggle('hidden', i !== step);
     const nav = document.querySelector('[data-step="' + i + '"]');
