@@ -207,9 +207,12 @@ $('researchFile').addEventListener('change', async event => {
   const file = event.target.files?.[0];
   if (!file) return;
   if (file.size > 2_000_000) { setStatus('JSON-bestand is groter dan 2 MB.', 'error'); return; }
-  $('researchJson').value = await file.text();
+  try {
+    $('researchJson').value = await file.text();
+    importResearch();
+  } catch (error) { setStatus('Bestand lezen mislukt: '+error.message,'error'); }
 });
-$('import').addEventListener('click', () => {
+function importResearch() {
   try {
     const parsed = validateResearch(parseJson($('researchJson').value));
     const ids = parsed.opportunities.map(item => item.id);
@@ -217,7 +220,7 @@ $('import').addEventListener('click', () => {
     if (parsed.company.toLocaleLowerCase('nl-NL') !== session.company.toLocaleLowerCase('nl-NL')) {
       if (!window.confirm('De bedrijfsnamen verschillen. Heb je gecontroleerd dat dit hetzelfde bedrijf is?')) return;
     }
-    if (!window.confirm('Dit vervangt het huidige onderzoek en eventuele kansbewerkingen. Doorgaan?')) return;
+    if (session.research && !window.confirm('Dit vervangt het huidige onderzoek en eventuele kansbewerkingen. Doorgaan?')) return;
     resetApprovals();
     session = replaceInput(session, 'research', parsed);
     session = setOpportunities(session, prioritizeOpportunities(parsed.opportunities));
@@ -228,7 +231,8 @@ $('import').addEventListener('click', () => {
     const headline='Kansen op indicatieve prioriteit gesorteerd; maximaal vijf voorgeselecteerd. ' + 'Onderzoek geïmporteerd: '+quality.opportunityCount+' kansen, '+quality.sourceCount+' bron-URL’s, '+quality.marketCount+' marktontwikkelingen en '+quality.competitorCount+' concurrenten.';
     setStatus(headline+(quality.issues.length?' Aandachtspunten: '+quality.issues.join(' '):' Basiscontrole afgerond.'),quality.issues.length?'warn':'ok');
   } catch (error) { setStatus(error.message, 'error'); }
-});
+}
+$('import').addEventListener('click',importResearch);
 $('add').addEventListener('click', () => {
   const id = 'manual-' + crypto.randomUUID();
   commit([...session.opportunities, {...normalizeOpportunity({id,title:'Nieuwe kans'}),selected:false}]);
