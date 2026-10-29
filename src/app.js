@@ -1,6 +1,6 @@
 import { parseJson } from './contracts.js';
 import { createSession, replaceInput, setOpportunities } from './session.js';
-import { validateResearch, researchPrompt, checkOpportunities, researchQuality, normalizeOpportunity, opportunityPriority, prioritizeOpportunities, opportunityQuality } from './route1.js';
+import { validateResearch, researchPrompt, checkOpportunities, researchQuality, normalizeOpportunity, opportunityPriority, prioritizeOpportunities, opportunityQuality } from './route1.js?v=59';
 import { buildReports, reportText } from './report.js';
 import { privacyWarnings } from './privacy.js';
 import { createCustomerPdf, createInternalPdf, zipFiles, download } from './export.js';
