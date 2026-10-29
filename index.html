@@ -44,6 +44,14 @@ button:not(.step):not(.secondary):is(#start,#copyPrompt,#import,#toReports,#down
 .steps button.step{box-shadow:none}
 .steps button.step.active{box-shadow:0 0 28px #b5ff7229}
 @media(prefers-reduced-motion:reduce){.progress-top,button{transition:none!important}}
+
+/* Ximo Intro inspired ambient backdrop: visible behind all content */
+html{background:#061321}
+body{min-height:100vh;background:radial-gradient(ellipse 64% 52% at 92% 22%,rgba(28,90,83,.48),transparent 75%),radial-gradient(ellipse 60% 65% at 6% 83%,rgba(18,57,86,.58),transparent 78%),linear-gradient(125deg,#061321 10%,#0b2234 55%,#061321 100%);background-attachment:fixed}
+body::before{z-index:0;background:radial-gradient(circle at 82% 36%,rgba(181,255,114,.075),transparent 33%),radial-gradient(circle at 15% 70%,rgba(47,123,135,.13),transparent 42%)}
+body::after{content:"";position:fixed;z-index:0;right:-180px;top:15vh;width:min(65vw,780px);aspect-ratio:1;border:1px solid rgba(181,255,114,.12);border-radius:50%;box-shadow:0 0 0 90px rgba(181,255,114,.025),0 0 0 195px rgba(181,255,114,.018);pointer-events:none}
+.site-header,main{position:relative;z-index:1}
+.panel{background:linear-gradient(145deg,rgba(16,40,59,.94),rgba(12,34,52,.92));box-shadow:0 20px 55px #00000018}
 </style>
 </head>
 <body><div id="progressTop" class="progress-top" role="progressbar" aria-label="Voortgang Quickscan" aria-valuemin="0" aria-valuemax="4" aria-valuenow="1"></div><header class="site-header"><div class="site-brand"><div class="brand">XIMO <b>/</b> QUICKSCAN</div><div class="subbrand">XIMO SOLUTIONS · AI & AUTOMATISERING</div></div><div class="header-actions"><span class="pill">V3 · ONTWIKKELVERSIE</span><button id="newScan" class="secondary new-scan" type="button">+ Nieuwe scan</button></div></header><main>
