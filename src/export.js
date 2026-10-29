@@ -115,7 +115,9 @@ function pdfDocument(pages,width,height,theme='customer') {
       rect(out,margin,y,width-margin*2,3,lime);y-=36;
       const content=entries.filter(e=>!e.title);
       const gap=wide?17:13, cols=wide?2:1, cardW=(width-margin*2-gap*(cols-1))/cols;
-      const cardH=wide?104:107;
+      const maxRows=Math.max(1,Math.ceil(content.length/cols));
+      const available=Math.max(120,y-85);
+      const cardH=Math.min(wide?115:107,Math.max(62,(available-gap*(maxRows-1))/maxRows));
       let shown=0;
       for(const entry of content){
         const col=shown%cols, row=Math.floor(shown/cols), x=margin+col*(cardW+gap), top=y-row*(cardH+gap);
@@ -200,7 +202,7 @@ function chapterLines(report,index) {
 }
 export function createCustomerPdf(report) {
   if (report.audience !== 'customer') throw Error('Ongeldig klantrapport.');
-  return pdfDocument(customerPages(report),960,540,'customer');
+  return pdfDocument(customerPages(report),841.89,595.28,'customer');
 }
 export function createInternalPdf(report) {
   if (report.audience !== 'internal') throw Error('Ongeldig intern rapport.');
