@@ -22,15 +22,27 @@ function wrap(text, limit) {
 function pdfDocument(pages, width, height) {
   const objects = [null, null, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'];
   const pageIds = [];
-  for (const lines of pages) {
-    let y = height - 62;
-    const commands = ['0.06 0.13 0.19 rg','0 0 '+width+' '+height+' re f','0.74 0.96 0.50 rg'];
+  for (const [pageIndex, lines] of pages.entries()) {
+    const cover = pageIndex === 0 || pageIndex === pages.length - 1;
+    let y = height - (cover ? 145 : 110);
+    const commands = [cover ? '0.03 0.09 0.14 rg' : '1 1 1 rg','0 0 '+width+' '+height+' re f'];
+    if (cover) {
+      commands.push('0.71 1 0.45 rg', (width-25)+' 0 25 '+height+' re f');
+      commands.push('0.71 1 0.45 rg','BT /F1 16 Tf 1 0 0 1 50 '+(height-45)+' Tm (XIMO / SOLUTIONS) Tj ET');
+    } else {
+      commands.push('0.03 0.09 0.14 rg','0 '+(height-55)+' '+width+' 55 re f');
+      commands.push('0.71 1 0.45 rg','BT /F1 13 Tf 1 0 0 1 50 '+(height-35)+' Tm (XIMO / SOLUTIONS) Tj ET');
+      commands.push('0.03 0.09 0.14 rg','BT /F1 9 Tf 1 0 0 1 50 27 Tm (XIMO SOLUTIONS | VERTROUWELIJK) Tj ET');
+      commands.push('BT /F1 9 Tf 1 0 0 1 '+(width-80)+' 27 Tm ('+(pageIndex+1)+' / '+pages.length+') Tj ET');
+      commands.push('0.71 1 0.45 rg','50 '+(height-68)+' '+(width-100)+' 3 re f');
+    }
+    commands.push(cover ? '1 1 1 rg' : '0.03 0.09 0.14 rg');
     for (const entry of lines) {
       const size = entry.title ? 25 : 12;
       const leading = entry.title ? 36 : 19;
       const maxChars = entry.title ? Math.floor((width-100)/14) : Math.floor((width-100)/6.5);
       for (const part of wrap(entry.text,maxChars)) {
-        if (y < 34) break;
+        if (y < (cover ? 65 : 65)) break;
         commands.push('BT /F1 '+size+' Tf 1 0 0 1 50 '+y.toFixed(1)+' Tm ('+escapePdf(part)+') Tj ET');
         y -= leading;
       }
