@@ -1,6 +1,8 @@
 // Run with: node --experimental-default-type=module --test tests/route1-regression.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createSession, replaceInput, setOpportunities, approveReport, canExport } from '../src/session.js';
+import { parseJson, compareCompanyNames, toCustomerOpportunity } from '../src/contracts.js';
 import { researchPrompt, validateResearch, opportunityPriority, opportunityQuality, prioritizeOpportunities } from '../src/route1.js';
 
 const opportunity = (id, scores={relevance:4,impact:4,feasibility:3,evidence:2}) => ({
@@ -45,4 +47,38 @@ test('missing evidence yields incomplete quality without inventing sources',()=>
 test('priority selection is capped at five',()=>{
   const items=Array.from({length:7},(_,i)=>opportunity('k'+i));
   assert.equal(prioritizeOpportunities(items).filter(x=>x.selected).length,5);
+});
+
+
+test('invalid JSON produces a clear validation error',()=>{
+  assert.throws(()=>parseJson('{bad json'),/geen geldige JSON/);
+  assert.throws(()=>parseJson('   '),/Geen JSON-inhoud/);
+});
+test('approvals are invalidated after editing opportunities',()=>{
+  let session=createSession('research');
+  session=approveReport(approveReport(session,'customer'),'internal');
+  assert.equal(canExport(session),true);
+  session=setOpportunities(session,[opportunity('k1')]);
+  assert.equal(canExport(session),false);
+  assert.equal(session.approvals.customer,false);
+  assert.equal(session.approvals.internal,false);
+});
+test('new research invalidates previous opportunities and approvals',()=>{
+  let session=createSession('research');
+  session=setOpportunities(session,[opportunity('k1')]);
+  session=approveReport(approveReport(session,'customer'),'internal');
+  session=replaceInput(session,'research',research);
+  assert.deepEqual(session.opportunities,[]);
+  assert.equal(canExport(session),false);
+});
+test('inventory data cannot be added to research-only route',()=>{
+  assert.throws(()=>replaceInput(createSession('research'),'inventory',{}),/Inventory not allowed/);
+});
+test('customer export excludes internal solution and source references',()=>{
+  const result=toCustomerOpportunity({...opportunity('k1'),internalSolution:'Intern advies',sourceRefs:['https://example.org']});
+  assert.equal('internalSolution' in result,false);
+  assert.equal('sourceRefs' in result,false);
+});
+test('different trade names trigger review rather than a hard rejection',()=>{
+  assert.equal(compareCompanyNames('Voorbeeld BV','Andere Handelsnaam').status,'uncertain');
 });
