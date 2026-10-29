@@ -37,7 +37,7 @@ function pdfDocument(pages,width,height,theme='customer') {
     return y-visible.length*leading;
   };
   for(const [index,entries] of pages.entries()){
-    const dark=theme==='customer' && (index===0||index===pages.length-1);
+    const dark=index===0 || (theme==='customer' && index===pages.length-1);
     const out=[];
     rect(out,0,0,width,height,dark?navy:'1 1 1');
     if(dark){
@@ -85,13 +85,13 @@ function pdfDocument(pages,width,height,theme='customer') {
       }
       txt(out,'XIMO',margin,height-53,wide?23:18,'1 1 1',true);
       txt(out,'/ SOLUTIONS',margin+(wide?82:64),height-53,wide?20:16,lime,true);
-      txt(out,(index===0?'01 / INTRODUCTIE':'06 / VERVOLG & GESPREK'),margin,height-115,10,lime,true);
+      txt(out,(index===0?'01 / INTRODUCTIE':String(pages.length).padStart(2,'0')+' / VERVOLG & GESPREK'),margin,height-115,10,lime,true);
       const heading=entries.find(e=>e.title)?.text||'Quickscan';
       if(index===0){
         txt(out,'AI-kansen voor',margin,height-(wide?185:200),wide?43:31,'1 1 1',true);
-        const company=entries.find(e=>/^Bedrijf:/.test(e.text))?.text.replace(/^Bedrijf:\s*/,'')||'uw organisatie';
+        const company=entries.find(e=>/^Bedrijf\s*\|/.test(e.text))?.text.split(' | ').slice(1).join(' | ')||'uw organisatie';
         paragraph(out,company,margin,height-(wide?245:245),width*.65,wide?37:27,wide?44:35,2,'0.71 1 0.45',true);
-        txt(out,'EXTERNE QUICKSCAN / GESPREKSSTARTER',margin,height-(wide?318:348),11,'0.77 0.86 0.87',true);
+        txt(out,theme==='internal'?'VERTROUWELIJK / XIMO INTERN':'EXTERNE QUICKSCAN / GESPREKSSTARTER',margin,height-(wide?318:348),11,'0.77 0.86 0.87',true);
       } else {
         txt(out,'Van kansen naar',margin,height-(wide?193:205),wide?40:30,'1 1 1',true);
         txt(out,'vooruitgang.',margin,height-(wide?245:248),wide?43:32,'0.71 1 0.45',true);
@@ -117,7 +117,7 @@ function pdfDocument(pages,width,height,theme='customer') {
       const gap=wide?17:13, cols=wide?2:1, cardW=(width-margin*2-gap*(cols-1))/cols;
       const maxRows=Math.max(1,Math.ceil(content.length/cols));
       const available=Math.max(120,y-85);
-      const cardH=Math.min(wide?115:107,Math.max(62,(available-gap*(maxRows-1))/maxRows));
+      const cardH=Math.max(38,Math.min(wide?115:107,(available-gap*(maxRows-1))/maxRows));
       let shown=0;
       for(const entry of content){
         const col=shown%cols, row=Math.floor(shown/cols), x=margin+col*(cardW+gap), top=y-row*(cardH+gap);
@@ -127,8 +127,10 @@ function pdfDocument(pages,width,height,theme='customer') {
         const [rawHeading,...rest]=entry.text.split(' | ');
         const hasHeading=rest.length>0;
         const label=hasHeading?rawHeading:(entry.title?'AI-KANS '+String(shown+1).padStart(2,'0'):'INZICHT '+String(shown+1).padStart(2,'0'));
-        paragraph(out,label,x+17,top-23,cardW-34,wide?12:11,wide?15:14,2,ink,true);
-        paragraph(out,hasHeading?rest.join(' | '):entry.text,x+17,top-(hasHeading?57:46),cardW-34,wide?11:10,wide?16:15,wide?3:3,'0.25 0.34 0.39');
+        const tight=cardH<82;
+        const headSize=tight?9:(wide?12:11),bodySize=tight?8:(wide?11:10);
+        paragraph(out,label,x+17,top-(tight?15:23),cardW-34,headSize,tight?11:15,tight?1:2,ink,true);
+        paragraph(out,hasHeading?rest.join(' | '):entry.text,x+17,top-(tight?29:hasHeading?57:46),cardW-34,bodySize,tight?10:15,tight?2:3,'0.25 0.34 0.39');
         shown++;
       }
       if(!shown){
