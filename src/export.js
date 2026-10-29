@@ -1,3 +1,4 @@
+import { customerPages, internalPages } from './report-pages.js?v=81';
 // Minimal deterministic PDF and ZIP writers; no external services or dependencies.
 const encoder = new TextEncoder();
 const bytes = text => encoder.encode(text);
@@ -198,12 +199,12 @@ function chapterLines(report,index) {
   return lines;
 }
 export function createCustomerPdf(report) {
-  if (report.audience !== 'customer' || report.chapters.length !== 6) throw Error('Ongeldig klantrapport.');
-  return pdfDocument(report.chapters.map((_,i)=>chapterLines(report,i)),960,540,'customer');
+  if (report.audience !== 'customer') throw Error('Ongeldig klantrapport.');
+  return pdfDocument(customerPages(report),960,540,'customer');
 }
 export function createInternalPdf(report) {
-  if (report.audience !== 'internal' || report.chapters.length !== 6) throw Error('Ongeldig intern rapport.');
-  return pdfDocument(report.chapters.map((_,i)=>chapterLines(report,i)),595.28,841.89,'internal');
+  if (report.audience !== 'internal') throw Error('Ongeldig intern rapport.');
+  return pdfDocument(internalPages(report),595.28,841.89,'internal');
 }
 const u16 = (v) => [v&255,(v>>>8)&255];
 const u32 = (v) => [v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255];
