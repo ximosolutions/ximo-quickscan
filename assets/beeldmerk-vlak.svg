@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img"><title>Ximo Solutions beeldmerk</title>
+<rect width="512" height="512" rx="112" fill="#061321"/><circle cx="256" cy="256" r="150" fill="none" stroke="#365d64" stroke-width="16"/>
+<path d="M 256 106 A 150 150 0 0 1 362 150" fill="none" stroke="#b5ff72" stroke-width="16" stroke-linecap="round"/>
+<circle cx="256" cy="256" r="92" fill="#163747"/>
+<circle cx="256" cy="256" r="92" fill="none" stroke="#f5f8fa" stroke-width="32"/>
+<circle cx="362" cy="150" r="58" fill="#061321"/>
+<circle cx="362" cy="150" r="46" fill="#b5ff72"/>
+</svg>
