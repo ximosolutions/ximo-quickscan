@@ -111,3 +111,34 @@ test('source URLs are preserved but invalid links flagged',()=>{
  assert.equal(imported.sourceRefs.length,2);
  assert.ok(opportunityQuality(imported,research).issues.some(issue=>issue.includes('http(s)-URL')));
 });
+
+test('selection stays within 3 to 5 opportunities',async()=>{
+ const {checkOpportunities}=await import('../src/route1.js');
+ const three=[opportunity('a'),opportunity('b'),opportunity('c')].map(x=>({...x,selected:true}));
+ assert.equal(checkOpportunities(three).errors.length,0);
+ assert.match(checkOpportunities(three.slice(0,2)).errors.join(' '),/3 tot 5/);
+ const six=Array.from({length:6},(_,i)=>({...opportunity('x'+i),selected:true}));
+ assert.match(checkOpportunities(six).errors.join(' '),/3 tot 5/);
+});
+test('manual ordering is retained in session export and restoration',()=>{
+ const items=['c','a','b'].map(id=>({...opportunity(id),selected:true}));
+ const original={...createSession('research'),company:'Test BV',website:'https://example.org',research:{original:research},opportunities:items};
+ const restored=importSession(exportSession(original));
+ assert.deepEqual(restored.opportunities.map(x=>x.id),['c','a','b']);
+ assert.deepEqual(restored.opportunities.map(x=>x.selected),[true,true,true]);
+});
+test('edited score values persist after saving and reopening',()=>{
+ const edited={...opportunity('k1',{relevance:5,impact:1,feasibility:2,evidence:4}),selected:true};
+ const original={...createSession('research'),company:'Test BV',website:'https://example.org',research:{original:research},opportunities:[edited]};
+ const restored=importSession(exportSession(original));
+ assert.deepEqual(restored.opportunities[0].scores,edited.scores);
+ assert.equal(opportunityPriority(restored.opportunities[0]).complete,true);
+});
+test('session restoration refuses duplicate edited opportunity IDs',()=>{
+ const original={...createSession('research'),company:'Test BV',website:'https://example.org',research:{original:research},opportunities:[opportunity('a'),opportunity('a')]};
+ assert.throws(()=>importSession(exportSession(original)),/Dubbele kans-ID/);
+});
+test('research validation rejects missing company and empty opportunities',()=>{
+ assert.throws(()=>validateResearch({...research,company:''}),/Bedrijfsnaam/);
+ assert.throws(()=>validateResearch({...research,opportunities:[]}),/geen AI-kansen/);
+});
