@@ -55,7 +55,7 @@ function pdfDocument(pages,width,height) {
       const heading=entries.find(e=>e.title)?.text||'Quickscan';
       if(pageIndex===0){
         txt(out,'AI-kansen voor',margin,height-(wide?185:200),wide?43:31,'1 1 1',true);
-        const company=entries.find(e=>/^Bedrijf:/.test(e.text))?.text.replace(/^Bedrijf:\\s*/,'')||'uw organisatie';
+        const company=entries.find(e=>/^Bedrijf:/.test(e.text))?.text.replace(/^Bedrijf:\s*/,'')||'uw organisatie';
         paragraph(out,company,margin,height-(wide?245:245),width*.65,wide?37:27,wide?44:35,2,'0.71 1 0.45',true);
         txt(out,'EXTERNE QUICKSCAN / GESPREKSSTARTER',margin,height-(wide?318:348),11,'0.77 0.86 0.87',true);
       } else {
@@ -130,10 +130,9 @@ function chapterLines(report,index) {
     for (const op of report.opportunities) lines.push({text:op.title+': '+(op.painPoint||'Te verifiëren')});
   } else if (index === 3) {
     for (const op of report.opportunities) {
-      lines.push({text:op.title,title:true},{text:'Pijnpunt: '+(op.painPoint||'Te verifiëren')},{text:'Voordeel: '+(op.benefits||'Te verifiëren')});
+      lines.push({text:op.title+' — '+(op.benefits||op.painPoint||'Te verifiëren'),title:true});
       if (report.audience === 'internal') {
-        lines.push({text:'Interne oplossingsrichting: '+(op.internalSolution||'Nog uit te werken')});
-        lines.push({text:'Bronnen: '+(op.sourceRefs||[]).join(', ')});
+        lines.push({text:'Oplossingsrichting: '+(op.internalSolution||'Nog uit te werken')});
       }
     }
   } else if (index === 4) {
