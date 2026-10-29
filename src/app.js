@@ -166,7 +166,7 @@ function renderOpportunities() {
         wrapper.append(select);scores.append(wrapper);
       }
       details.append(scores);
-      const refsField=field('Bron-URL’s (één per regel)',(item.sourceRefs||[]).join('\\n'),value=>update(index,'sourceRefs',value.split(/\\r?\\n/).map(x=>x.trim()).filter(Boolean)),true);
+      const refsField=field('Bron-URL’s (één per regel)',(item.sourceRefs||[]).join('\n'),value=>update(index,'sourceRefs',value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean)),true);
       details.append(refsField);
       const remove=document.createElement('button');
       remove.className='secondary';
