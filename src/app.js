@@ -1,6 +1,6 @@
 import { parseJson } from './contracts.js';
 import { createSession, replaceInput, setOpportunities } from './session.js';
-import { validateResearch, researchPrompt, checkOpportunities, normalizeOpportunity } from './route1.js';
+import { validateResearch, researchPrompt, checkOpportunities, researchQuality, normalizeOpportunity } from './route1.js';
 import { buildReports, reportText } from './report.js';
 import { privacyWarnings } from './privacy.js';
 import { createCustomerPdf, createInternalPdf, zipFiles, download } from './export.js';
@@ -219,6 +219,9 @@ $('import').addEventListener('click', () => {
     expandedOpportunityId = null;
     renderOpportunities();
     show(2);
+    const quality=researchQuality(parsed);
+    const headline='Onderzoek geïmporteerd: '+quality.opportunityCount+' kansen, '+quality.sourceCount+' bron-URL’s, '+quality.marketCount+' marktontwikkelingen en '+quality.competitorCount+' concurrenten.';
+    setStatus(headline+(quality.issues.length?' Aandachtspunten: '+quality.issues.join(' '):' Basiscontrole afgerond.'),quality.issues.length?'warn':'ok');
   } catch (error) { setStatus(error.message, 'error'); }
 });
 $('add').addEventListener('click', () => {
