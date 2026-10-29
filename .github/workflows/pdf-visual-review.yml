@@ -1,0 +1,53 @@
+name: PDF visual review
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/export.js'
+      - 'src/report-pages.js'
+      - 'src/report.js'
+      - 'scripts/pdf-visual-review.mjs'
+      - '.github/workflows/pdf-visual-review.yml'
+jobs:
+  render-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PDF renderer
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils python3-pil
+      - name: Generate two full Quickscan scenarios
+        run: node scripts/pdf-visual-review.mjs
+      - name: Render every report page to PNG
+        run: |
+          mkdir -p artifacts/pdf-review/png
+          for f in artifacts/pdf-review/*.pdf; do
+            name=$(basename "$f" .pdf)
+            pdfinfo "$f" > "artifacts/pdf-review/$name.info"
+            pdftoppm -f 1 -l 15 -scale-to 1000 -png -r 90 "$f" "artifacts/pdf-review/png/$name"
+          done
+      - name: Check page count, orientation and rasterization
+        run: |
+          python3 - <<'PY'
+          import glob,os,re
+          from PIL import Image
+          for pdf in glob.glob('artifacts/pdf-review/*.pdf'):
+              name=os.path.basename(pdf)[:-4]
+              info=open('artifacts/pdf-review/'+name+'.info').read()
+              pages=int(re.search(r'Pages:\s+(\d+)',info).group(1))
+              expected=13 if name.endswith('customer') else 15
+              assert pages==expected,(name,pages,expected)
+              pngs=glob.glob('artifacts/pdf-review/png/'+name+'-*.png')
+              assert len(pngs)==expected,(name,len(pngs),expected)
+              for path in pngs:
+                  im=Image.open(path)
+                  w,h=im.size
+                  assert (w>h)==name.endswith('customer'),(path,w,h)
+                  assert im.getbbox() is not None,path
+              print(name,'PASS',pages,'rendered pages')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ximo-quickscan-pdf-visual-review
+          path: artifacts/pdf-review/
+          retention-days: 30
