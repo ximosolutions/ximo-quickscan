@@ -1,6 +1,6 @@
 import { parseJson } from './contracts.js';
 import { createSession, replaceInput, setOpportunities } from './session.js';
-import { validateResearch, researchPrompt, checkOpportunities, researchQuality, normalizeOpportunity } from './route1.js';
+import { validateResearch, researchPrompt, checkOpportunities, researchQuality, normalizeOpportunity, opportunityPriority, prioritizeOpportunities } from './route1.js';
 import { buildReports, reportText } from './report.js';
 import { privacyWarnings } from './privacy.js';
 import { createCustomerPdf, createInternalPdf, zipFiles, download } from './export.js';
@@ -94,6 +94,11 @@ function renderOpportunities() {
     description.className = 'opportunity-summary';
     description.textContent = item.painPoint || 'Nog geen pijnpunt beschreven';
     info.append(title,description);
+    const priority=opportunityPriority(item);
+    const scoreInfo=document.createElement('p');
+    scoreInfo.className='muted tiny';
+    scoreInfo.textContent=priority.complete?'Indicatieve prioriteit: '+priority.score+'/100 · '+priority.label:'Prioriteit nog niet beoordeeld · scores ontbreken';
+    info.append(scoreInfo);
     const controls = document.createElement('div');
     controls.className = 'opportunity-controls';
     const edit = document.createElement('button');
@@ -215,12 +220,12 @@ $('import').addEventListener('click', () => {
     if (!window.confirm('Dit vervangt het huidige onderzoek en eventuele kansbewerkingen. Doorgaan?')) return;
     resetApprovals();
     session = replaceInput(session, 'research', parsed);
-    session = setOpportunities(session, parsed.opportunities);
+    session = setOpportunities(session, prioritizeOpportunities(parsed.opportunities));
     expandedOpportunityId = null;
     renderOpportunities();
     show(2);
     const quality=researchQuality(parsed);
-    const headline='Onderzoek geïmporteerd: '+quality.opportunityCount+' kansen, '+quality.sourceCount+' bron-URL’s, '+quality.marketCount+' marktontwikkelingen en '+quality.competitorCount+' concurrenten.';
+    const headline='Kansen op indicatieve prioriteit gesorteerd; maximaal vijf voorgeselecteerd. ' + 'Onderzoek geïmporteerd: '+quality.opportunityCount+' kansen, '+quality.sourceCount+' bron-URL’s, '+quality.marketCount+' marktontwikkelingen en '+quality.competitorCount+' concurrenten.';
     setStatus(headline+(quality.issues.length?' Aandachtspunten: '+quality.issues.join(' '):' Basiscontrole afgerond.'),quality.issues.length?'warn':'ok');
   } catch (error) { setStatus(error.message, 'error'); }
 });
