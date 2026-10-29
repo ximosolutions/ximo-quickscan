@@ -127,6 +127,26 @@ button{font-weight:600}
 .session-load:focus-within{outline:2px solid #B5FF72;outline-offset:2px}
 .header-actions button{margin:0;font-size:13px;padding:11px 14px}
 @media(max-width:700px){.header-actions{width:100%}.header-actions .pill{display:none}}
+
+/* V72 · compact opportunity editor · Ximo Brandbook */
+.opportunity-details{padding:18px 20px;margin-top:12px;background:#102B3B}
+.opportunity-field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.opportunity-details .opportunity-field{min-width:0}
+.opportunity-details .opportunity-field label{margin:0}
+.opportunity-details .opportunity-field textarea{min-height:68px;height:68px}
+.opportunity-details .opportunity-field-title,.opportunity-details .opportunity-field-internalSolution{grid-column:1/-1}
+.opportunity-details label{font-size:12px;line-height:1.35;margin-bottom:10px}
+.opportunity-details textarea,.opportunity-details input:not([type=checkbox]),.opportunity-details select{margin-top:5px;padding:9px 11px;font-size:13px;line-height:1.4;border-radius:10px}
+.opportunity-details .score-editor{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:14px 0;margin:12px 0}
+.opportunity-details .score-editor select{height:40px}
+.opportunity-details .quality-issues{margin:8px 0;color:#B7CBD0;font-size:12px}
+.opportunity-details .quality-issues p{margin:5px 0}
+.opportunity-details .tiny{margin:8px 0;font-size:11px}
+.opportunity-details .score-editor+div{margin-top:8px}
+.opportunity-details .score-editor~div textarea{min-height:64px;height:64px}
+.opportunity-details button{margin-top:8px}
+@media(max-width:850px){.opportunity-details .score-editor{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.opportunity-field-grid{grid-template-columns:1fr}.opportunity-details .opportunity-field-title,.opportunity-details .opportunity-field-internalSolution{grid-column:auto}.opportunity-details{padding:14px}.opportunity-details .score-editor{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body><div id="progressTop" class="progress-top" role="progressbar" aria-label="Voortgang Quickscan" aria-valuemin="0" aria-valuemax="4" aria-valuenow="1"></div><header class="site-header"><div class="site-brand"><img class="official-quickscan-logo" src="./assets/official-quickscan.svg" alt="XIMO / QUICKSCAN · Trusted AI Partner"></div><div class="header-actions"><span class="pill">V3 · ONTWIKKELVERSIE</span><button id="saveScan" class="secondary" type="button">Scan bewaren</button><label class="session-load" for="loadScan">Scan openen<input id="loadScan" type="file" accept=".json,application/json"></label><button id="newScan" class="secondary new-scan" type="button">+ Nieuwe scan</button></div></header><main>
@@ -137,4 +157,4 @@ button{font-weight:600}
 <section id="page1" class="panel hidden"><h2>Extern onderzoek</h2><p>Kopieer de onderzoeksopdracht naar ChatGPT. Controleer welke bedrijfsgegevens je deelt. Plak daarna de volledige JSON-uitvoer hieronder of kies een JSON-bestand.</p><div class="actions"><button id="copyPrompt">Kopieer onderzoeksprompt</button><button class="secondary" id="back1">Terug</button></div><details class="research-details"><summary>Bekijk de volledige onderzoeksprompt (Research Engine V3)</summary><label for="prompt">Onderzoeksprompt</label><textarea id="prompt" readonly></textarea></details><div class="research-upload"><strong>Importeer onderzoeksresultaat</strong><p class="muted tiny">Kies het gedownloade JSON-bestand (maximaal 2 MB). Handmatig plakken kan hieronder.</p><label for="researchFile">Selecteer JSON-bestand</label><input id="researchFile" type="file" accept=".json,application/json"></div><details class="research-details"><summary>Of plak JSON handmatig</summary><label for="researchJson">JSON-inhoud</label><textarea id="researchJson" placeholder='{"schema":"ximo-research","version":1,...}'></textarea></details><button id="import">Controleer en importeer</button></section>
 <section id="page2" class="panel hidden"><h2>Kansen selecteren & prioriteren</h2><p>Selecteer 3 tot 5 kansen. Bekijk ze eerst in één overzicht, wijzig de volgorde met de pijlen en open Details om een kans te bewerken. Interne oplossingsrichtingen blijven buiten het klantmodel.</p><div class="selection-summary"><span id="selectionIndicator">Selecteer 3 tot 5 kansen</span><span class="muted tiny">Klik op Details om een kans te bewerken</span></div><div id="opportunities"></div><button id="add">Nieuwe kans toevoegen</button><div id="qa"></div><div class="actions"><button id="toReports">Rapportages voorbereiden</button><button class="secondary" id="back2">Terug</button></div></section>
 <section id="page3" class="panel hidden"><h2>Rapportagebasis</h2><p>De voorvertoningen tonen de daadwerkelijke PDF-bestanden die je downloadt. Controleer beide documenten zorgvuldig voordat je ze goedkeurt.</p><div class="grid"><div><h3>Klantgericht concept</h3><iframe id="customerPreview" class="pdf-preview" title="Voorvertoning klantpresentatie"></iframe><button id="copyCustomer">Kopieer klanttekst</button></div><div><h3>Intern Ximo-concept</h3><iframe id="internalPreview" class="pdf-preview" title="Voorvertoning intern rapport"></iframe><button id="copyInternal">Kopieer interne tekst</button></div></div><div class="card"><h3>Goedkeuring en export</h3><p>Controleer beide concepten afzonderlijk. Na goedkeuring kun je twee PDF-bestanden of een ZIP downloaden.</p><label><input id="approveCustomer" type="checkbox"> Klantpresentatie goedgekeurd</label><label><input id="approveInternal" type="checkbox"> Intern rapport goedgekeurd</label><div class="actions"><button id="downloadCustomer" disabled>Klantpresentatie PDF</button><button id="downloadInternal" disabled>Intern rapport PDF</button><button id="downloadZip" disabled>ZIP met beide PDF-bestanden</button></div></div><button class="secondary" id="back3">Terug naar kansen</button></section>
-</main><script type="module" src="./src/app.js?v=71"></script></body></html>
+</main><script type="module" src="./src/app.js?v=72"></script></body></html>
