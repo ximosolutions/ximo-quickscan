@@ -4,7 +4,7 @@ import { createSession, replaceInput, setOpportunities } from './session.js';
 import { validateResearch, researchPrompt, checkOpportunities, researchQuality, normalizeOpportunity, opportunityPriority, prioritizeOpportunities, opportunityQuality } from './route1.js?v=79';
 import { buildReports, reportText } from './report.js?v=79';
 import { privacyWarnings } from './privacy.js';
-import { createCustomerPdf, createInternalPdf, zipFiles, download } from './export.js?v=81';
+import { createCustomerPdf, createInternalPdf, zipFiles, download } from './export.js?v=82';
 
 const $ = id => document.getElementById(id);
 let session = createSession('research');
