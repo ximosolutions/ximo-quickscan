@@ -35,6 +35,6 @@ test('internal longlist remains available and customer excludes internal metadat
  assert.ok(!customer.includes('SECRET_METADATA'));
  assert.ok(!customer.includes('SECRET_BUDGET'));
  assert.ok(!customer.includes('SECRET_LONG_LIST'));
- assert.ok(internal.includes('SECRET_LONG_LIST'));
+ assert.equal(pair.internal.opportunities[3].internalSolution,'SECRET_LONG_LIST');
  assert.ok(customer.includes('Extra kans'));
 });
