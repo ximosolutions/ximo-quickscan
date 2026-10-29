@@ -72,7 +72,8 @@ export const CHAPTERS = Object.freeze([
 
 export const CUSTOMER_FIELDS = Object.freeze([
   'id', 'title', 'priority', 'painPoint', 'benefits', 'impactSummary',
-  'feasibilitySummary', 'confidence', 'verificationNote', 'financialRange'
+  'feasibilitySummary', 'confidence', 'verificationNote', 'financialRange',
+  'solution', 'example', 'processSteps', 'validationQuestions', 'kpis', 'scores'
 ]);
 
 export function toCustomerOpportunity(opportunity) {
