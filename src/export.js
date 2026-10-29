@@ -37,82 +37,33 @@ function pdfDocument(pages,width,height,theme='customer') {
     return y-visible.length*leading;
   };
   for(const [index,entries] of pages.entries()){
-    const dark=index===0 || (theme==='customer' && index===pages.length-1);
+    const dark=index===0;
     const out=[];
     rect(out,0,0,width,height,dark?navy:'1 1 1');
     if(dark){
-      rect(out,width-18,0,18,height,lime);
-      rect(out,width*.79,0,width*.11,height*.57,'0.09 0.22 0.28');
-      // Ximo Intro signature: luminous starbursts, connected constellation and orbital nodes.
-      // All motifs stay in the right-hand visual zone, away from the title.
-      const motif = (x,y,r,filled=false) => {
-        out.push(filled ? '0.71 1 0.45 rg' : '0.71 1 0.45 RG', filled ? '' : '1.2 w');
-        const pts=[];
-        for(let j=0;j<16;j++){
-          const angle=j*Math.PI/8, rr=j%2===0?r:r*.19;
-          pts.push([x+Math.cos(angle)*rr,y+Math.sin(angle)*rr]);
-        }
-        out.push(pts.map((p,j)=>p[0].toFixed(2)+' '+p[1].toFixed(2)+(j?' l':' m')).join(' ')+' h '+(filled?'f':'S'));
-      };
-      const dot=(x,y,r,color='0.71 1 0.45')=>{
-        const k=.55228475;
-        out.push(color+' rg', (x+r)+' '+y+' m '+(x+r)+' '+(y+k*r)+' '+(x+k*r)+' '+(y+r)+' '+x+' '+(y+r)+' c '+(x-k*r)+' '+(y+r)+' '+(x-r)+' '+(y+k*r)+' '+(x-r)+' '+y+' c '+(x-r)+' '+(y-k*r)+' '+(x-k*r)+' '+(y-r)+' '+x+' '+(y-r)+' c '+(x+k*r)+' '+(y-r)+' '+(x+r)+' '+(y-k*r)+' '+(x+r)+' '+y+' c f');
-      };
-      const points=wide
-        ? [[.75,.77],[.88,.83],[.92,.59],[.76,.42],[.89,.27],[.69,.19]]
-        : [[.79,.78],[.91,.85],[.94,.64],[.80,.46],[.92,.28],[.74,.18]];
-      out.push('0.22 0.45 0.41 RG','0.9 w');
-      for(let j=0;j<points.length-1;j++){
-        const a=points[j],b=points[j+1];
-        out.push((a[0]*width)+' '+(a[1]*height)+' m '+(b[0]*width)+' '+(b[1]*height)+' l S');
-      }
-      points.forEach(([px,py],j)=>dot(px*width,py*height,j%2?3.5:2.3));
-      motif(width*.81,height*.70,wide?25:18);
-      motif(width*.92,height*.38,wide?15:12,true);
-      motif(width*.70,height*.88,wide?9:7,true);
-      // Soft green corner panels and small bright particles, not a solid color strip alone.
-      rect(out,width*.70,height*.05,width*.16,height*.015,'0.71 1 0.45');
-      for(let j=0;j<16;j++){
-        const x=width*(.68+(j*37%29)/100),y=height*(.12+(j*19%76)/100);
-        dot(x,y,j%3===0?1.8:.9,j%4===0?'0.71 1 0.45':'0.22 0.48 0.42');
-      }
-      // geometric orbit rings, as in the Ximo Intro visual language
-      for(let radius=105;radius<110;radius+=90){
-        const cx=width*.91,cy=height*.56;
-        out.push('0.16 0.31 0.33 RG','0.8 w');
-        const k=.55228475,r=radius;
-        out.push((cx+r)+' '+cy+' m '+(cx+r)+' '+(cy+k*r)+' '+(cx+k*r)+' '+(cy+r)+' '+cx+' '+(cy+r)+' c '+(cx-k*r)+' '+(cy+r)+' '+(cx-r)+' '+(cy+k*r)+' '+(cx-r)+' '+cy+' c '+(cx-r)+' '+(cy-k*r)+' '+(cx-k*r)+' '+(cy-r)+' '+cx+' '+(cy-r)+' c '+(cx+k*r)+' '+(cy-r)+' '+(cx+r)+' '+(cy-k*r)+' '+(cx+r)+' '+cy+' c S');
-      }
-      txt(out,'XIMO',margin,height-53,wide?23:18,'1 1 1',true);
-      txt(out,'/ SOLUTIONS',margin+(wide?82:64),height-53,wide?20:16,lime,true);
-      txt(out,(index===0?'01 / INTRODUCTIE':String(pages.length).padStart(2,'0')+' / VERVOLG & GESPREK'),margin,height-115,10,lime,true);
-      const heading=entries.find(e=>e.title)?.text||'Quickscan';
+      // Approved Ximo report covers: restrained navy surface, no decorative stars,
+      // no large accent bars and generous whitespace.
+      rect(out,margin,height-(wide?338:355),wide?390:330,1,'0.16 0.28 0.30');
+      txt(out,'XIMO',margin,height-53,wide?17:15,'1 1 1',true);
+      txt(out,theme==='customer'?'/ QUICKSCAN':'/ SOLUTIONS',margin+(wide?54:47),height-53,wide?14:13,'0.72 0.82 0.85',true);
+      txt(out,theme==='customer'?'XIMO QUICKSCAN / '+(entries.find(e=>/^Bedrijf\\s*\\|/.test(e.text))?.text.split(' | ')[1]||'ORGANISATIE').toUpperCase():'VERTROUWELIJK / XIMO INTERN',margin,height-(wide?124:160),10,lime,true);
       if(index===0){
-        txt(out,'AI-kansen voor',margin,height-(wide?185:200),wide?43:31,'1 1 1',true);
-        const company=entries.find(e=>/^Bedrijf\s*\|/.test(e.text))?.text.split(' | ').slice(1).join(' | ')||'uw organisatie';
-        paragraph(out,company,margin,height-(wide?245:245),width*.65,wide?37:27,wide?44:35,2,'0.71 1 0.45',true);
-        txt(out,theme==='internal'?'VERTROUWELIJK / XIMO INTERN':'EXTERNE QUICKSCAN / GESPREKSSTARTER',margin,height-(wide?318:348),11,'0.77 0.86 0.87',true);
-      } else {
-        txt(out,'Van kansen naar',margin,height-(wide?193:205),wide?40:30,'1 1 1',true);
-        txt(out,'vooruitgang.',margin,height-(wide?245:248),wide?43:32,'0.71 1 0.45',true);
-      }
-      let y=height-(wide?365:395);
-      const content=entries.filter(e=>!e.title);
-      for(const entry of content.slice(0,index===0?3:4)){
-        if(y<105)break;
-        y=paragraph(out,entry.text,margin,y,width*.64,wide?13:11,wide?21:18,index===0?3:4,'0.79 0.86 0.88')-16;
+        txt(out,theme==='customer'?'Meer inzicht.':'Eerst begrijpen.',margin,height-(wide?190:214),wide?37:26,'1 1 1',true);
+        txt(out,theme==='customer'?'Gerichter vooruit.':'Dan gericht aanbieden.',margin,height-(wide?235:252),wide?37:26,lime,true);
+        const company=entries.find(e=>/^Bedrijf\\s*\\|/.test(e.text))?.text.split(' | ').slice(1).join(' | ')||'de organisatie';
+        paragraph(out,theme==='customer'?'Een eerste verkenning van AI- en automatiseringskansen voor '+company+'.':'Onderzoeks-, advies- en acquisitiedossier voor '+company+'.',margin,height-(wide?277:293),width*.67,wide?13:11,18,3,'0.77 0.86 0.87');
+        rect(out,margin,height-(wide?345:370),3,29,lime);
+        paragraph(out,theme==='customer'?'Concept / kansen nog te valideren':'Interne conceptversie / aannames en systemen nog te toetsen',margin+14,height-(wide?330:356),width*.63,9,13,2,'0.75 0.83 0.85');
       }
       txt(out,'XIMO SOLUTIONS  /  QUICKSCAN',margin,35,9,'0.63 0.73 0.78');
       txt(out,String(index+1).padStart(2,'0')+' / '+String(pages.length).padStart(2,'0'),width-margin-55,35,9,'0.63 0.73 0.78');
     }else{
-      rect(out,0,height-56,width,56,navy);
-      txt(out,'XIMO',margin,height-35,14,'1 1 1',true);
-      txt(out,'/ SOLUTIONS',margin+44,height-35,13,lime,true);
-      txt(out,String(index+1).padStart(2,'0')+' / '+String(pages.length).padStart(2,'0'),width-margin-42,height-35,10,'0.72 0.82 0.85');
+      txt(out,'XIMO',margin,height-40,14,navy,true);
+      txt(out,theme==='customer'?'/ QUICKSCAN':'/ SOLUTIONS',margin+47,height-40,12,muted,true);
       txt(out,String(index+1).padStart(2,'0')+' / QUICKSCAN',margin,height-92,10,muted,true);
       const heading=entries.find(e=>e.title)?.text||'Analyse';
       let y=paragraph(out,heading,margin,height-135,width-margin*2,wide?36:27,wide?44:35,2,ink,true)-16;
-      rect(out,margin,y,width-margin*2,3,lime);y-=36;
+      y-=25;
       const content=entries.filter(e=>!e.title);
       const gap=wide?17:13, cols=wide?2:1, cardW=(width-margin*2-gap*(cols-1))/cols;
       const maxRows=Math.max(1,Math.ceil(content.length/cols));
@@ -122,8 +73,8 @@ function pdfDocument(pages,width,height,theme='customer') {
       for(const entry of content){
         const col=shown%cols, row=Math.floor(shown/cols), x=margin+col*(cardW+gap), top=y-row*(cardH+gap);
         if(top-cardH<78)break;
-        rect(out,x,top-cardH,cardW,cardH,'0.93 0.96 0.96');
-        rect(out,x,top-cardH,4,cardH,'0.71 1 0.45');
+        rect(out,x,top-cardH,cardW,cardH,'0.965 0.977 0.98');
+        rect(out,x,top-cardH,1,cardH,'0.82 0.88 0.88');
         const [rawHeading,...rest]=entry.text.split(' | ');
         const hasHeading=rest.length>0;
         const label=hasHeading?rawHeading:(entry.title?'AI-KANS '+String(shown+1).padStart(2,'0'):'INZICHT '+String(shown+1).padStart(2,'0'));
