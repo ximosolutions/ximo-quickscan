@@ -5,8 +5,9 @@ function safeText(value) { return typeof value === 'string' ? value : ''; }
 export function buildReports({ company, website, research, opportunities }) {
   const qa = checkOpportunities(opportunities);
   if (qa.errors.length) throw new Error(qa.errors.join(' '));
-  const customer = customerOpportunities(opportunities);
-  const internal = opportunities.map(item => ({
+  const ordered = [...opportunities.filter(item=>item.selected),...opportunities.filter(item=>!item.selected)];
+  const customer = customerOpportunities(ordered.map(item=>({...item,selected:true})));
+  const internal = ordered.map(item => ({
     ...item, sourceRefs: [...(item.sourceRefs || [])]
   }));
   const common = { company: safeText(company), website: safeText(website), chapters: [...CHAPTERS],
