@@ -48,6 +48,20 @@ function normalizeScores(value) {
   }
   return result;
 }
+export function opportunityPriority(item) {
+  const scores=item?.scores||{};
+  const weights={relevance:0.35,impact:0.30,feasibility:0.20,evidence:0.15};
+  const keys=Object.keys(weights);
+  const complete=keys.every(key=>Number.isInteger(scores[key])&&scores[key]>=1&&scores[key]<=5);
+  if (!complete) return {score:null,complete:false,label:'Niet beoordeeld'};
+  const score=Math.round(keys.reduce((total,key)=>total+scores[key]*weights[key],0)*20);
+  return {score,complete:true,label:score>=80?'Hoge prioriteit':score>=60?'Middelgrote prioriteit':'Verkennen'};
+}
+export function prioritizeOpportunities(items) {
+  return items.map((item,index)=>({item,index,priority:opportunityPriority(item)}))
+    .sort((a,b)=>(b.priority.score??-1)-(a.priority.score??-1)||a.index-b.index)
+    .map(({item},index)=>({...item,selected:index<5}));
+}
 export function researchQuality(research) {
   const issues=[];
   const sources=Array.isArray(research?.sources)?research.sources:[];
