@@ -4,16 +4,18 @@ Status bijgewerkt: 29 oktober 2026. Dit is een werkchecklist, geen claim dat ond
 
 ## Fase 1 — Stabiliteit
 - [x] Basisregressietests aanwezig (6 tests)
-- [x] Tests uitgebreid naar 20 scenario's (inclusief sessieherstel)
+- [x] Tests uitgebreid naar 23 scenario's (inclusief sessieherstel)
 - [x] GitHub Actions-testworkflow toegevoegd (draait bij push en pull request)
-- [ ] Alle 20 tests groen bevestigen in GitHub Actions
+- [x] Bestaande 20 tests groen bevestigd in GitHub Actions
+- [ ] Nieuwe 23-test-suite groen bevestigen
 - [ ] Browsercontrole van stappen Start → Onderzoek → Kansen → Rapport
 - [ ] Controleren dat wijzigingen eerdere rapportgoedkeuringen ongeldig maken
 
 ## Fase 2 — Onderzoeksimport
 - [ ] Ongeldige JSON, verkeerd schema en ontbrekende velden testen
 - [ ] Gebruikersgerichte foutmeldingen en waarschuwingen verbeteren
-- [ ] Duplicaten, bronverwijzingen en kwaliteitsscores controleren
+- [x] Dubbele kanstitels en kans-ID's blokkeren; ongeldige bron-URL's signaleren
+- [ ] Bronverwijzingen en kwaliteitsscores verder controleren
 
 ## Fase 3 — Kansenmodule
 - [ ] Selecteren, bewerken en herordenen testen
