@@ -80,6 +80,21 @@ export function researchQuality(research) {
   const independent=sources.filter(source=>record(source)&&source.independent===true).length;
   return {issues,sourceCount:urls.size,marketCount:market.length,competitorCount:competitors.length,opportunityCount:opportunities.length,scoredCount:scored.length,linkedCount:linked.length,independentConfirmedCount:independent};
 }
+export function opportunityQuality(item, research) {
+  const issues=[];
+  const sourceUrls=new Set((research?.sources||[]).map(s=>typeof s==='string'?s:s?.url).filter(x=>typeof x==='string'&&/^https?:\/\//i.test(x)));
+  const refs=Array.isArray(item.sourceRefs)?item.sourceRefs:[];
+  const linked=refs.filter(ref=>sourceUrls.has(ref)).length;
+  if (!item.painPoint?.trim()) issues.push('Mogelijk pijnpunt ontbreekt.');
+  if (!item.benefits?.trim()) issues.push('Verwacht voordeel ontbreekt.');
+  if (!item.verificationNote?.trim()) issues.push('Verificatievraag ontbreekt.');
+  if (!refs.length) issues.push('Geen bronverwijzingen.');
+  else if (!linked) issues.push('Geen bron gekoppeld aan de bronnenlijst.');
+  if (['hypothese','afleiding'].includes(item.evidenceType)) issues.push('Nog niet als bedrijfsfeit bevestigd.');
+  if (['relevance','impact','feasibility','evidence'].some(key=>!Number.isInteger(item.scores?.[key]))) issues.push('Prioriteitsscores onvolledig.');
+  const incomplete=!item.painPoint?.trim()||!item.benefits?.trim()||!item.verificationNote?.trim()||!refs.length;
+  return {status:incomplete?'Onvoldoende informatie':issues.length?'Verificatie nodig':'Gegevens aanwezig',issues,linkedSources:linked,sourceCount:refs.length};
+}
 export function checkOpportunities(items) {
   const selected = items.filter(x => x.selected);
   const ids = items.map(x => x.id);
