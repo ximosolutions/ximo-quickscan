@@ -8,6 +8,17 @@ import { createCustomerPdf, createInternalPdf, zipFiles, download } from './expo
 const $ = id => document.getElementById(id);
 let session = createSession('research');
 let reports = null;
+let previewUrls = [];
+function releasePreviews() { for (const url of previewUrls) URL.revokeObjectURL(url); previewUrls = []; }
+function renderPdfPreviews() {
+  releasePreviews();
+  const files = [createCustomerPdf(reports.customer),createInternalPdf(reports.internal)];
+  for (const [index,id] of ['customerPreview','internalPreview'].entries()) {
+    const url=URL.createObjectURL(new Blob([files[index]],{type:'application/pdf'}));
+    previewUrls.push(url);
+    $(id).src=url+'#toolbar=1&navpanes=0';
+  }
+}
 const setStatus = (message, type = '') => {
   $('status').textContent = message;
   $('status').className = type;
@@ -32,6 +43,7 @@ const field = (label, value, onChange, multiline = false) => {
 function commit(items) {
   session = setOpportunities(session, items);
   reports = null;
+  releasePreviews();
   resetApprovals();
   renderOpportunities();
 }
@@ -180,8 +192,7 @@ $('add').addEventListener('click', () => {
 $('toReports').addEventListener('click', () => {
   try {
     reports = buildReports({...session, research: session.research});
-    $('customerPreview').textContent = reportText(reports.customer);
-    $('internalPreview').textContent = reportText(reports.internal);
+    renderPdfPreviews();
     resetApprovals();
     show(3);
   } catch (error) { setStatus(error.message, 'error'); }
