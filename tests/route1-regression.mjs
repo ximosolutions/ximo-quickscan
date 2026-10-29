@@ -142,3 +142,11 @@ test('research validation rejects missing company and empty opportunities',()=>{
  assert.throws(()=>validateResearch({...research,company:''}),/Bedrijfsnaam/);
  assert.throws(()=>validateResearch({...research,opportunities:[]}),/geen AI-kansen/);
 });
+
+test('report-specific research fields survive normalization',()=>{
+ const extended={...research,reportData:{executiveSummary:'Specifieke samenvatting',pilot:{candidateId:'k1'}},opportunities:[{...opportunity('k1'),solution:'Integratie',example:'Een medewerker verwerkt een aanvraag',processSteps:['Ontvangen','Controleren','Verwerken'],validationQuestions:['Hoeveel aanvragen?']}]};
+ const result=validateResearch(extended);
+ assert.equal(result.reportData.pilot.candidateId,'k1');
+ assert.equal(result.opportunities[0].solution,'Integratie');
+ assert.equal(result.opportunities[0].processSteps.length,3);
+});
