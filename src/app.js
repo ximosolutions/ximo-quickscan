@@ -148,34 +148,49 @@ function renderOpportunities() {
         control.className='opportunity-field opportunity-field-'+key;
         contentFields.append(control);
       }
-      details.append(contentFields);
+      const contentHeading=document.createElement('h4');contentHeading.className='editor-section-title';contentHeading.textContent='Kans & verwachte waarde';
+      details.append(contentHeading,contentFields);
       const evidence=document.createElement('p');
       evidence.className='muted tiny';
       evidence.textContent='Onderbouwing: '+(item.evidenceType||'niet beoordeeld')+' · Bronnen: '+(item.sourceRefs?.length||0);
-      details.append(evidence);
+      const evidenceHeading=document.createElement('h4');evidenceHeading.className='editor-section-title';evidenceHeading.textContent='Onderbouwing & betrouwbaarheid';
+      details.append(evidenceHeading,evidence);
       const qualityList=document.createElement('div');
       qualityList.className='quality-issues';
       const heading=document.createElement('strong');heading.textContent='Kwaliteitscontrole';qualityList.append(heading);
       if (!quality.issues.length) { const p=document.createElement('p');p.textContent='Geen ontbrekende velden vastgesteld. Controleer broninhoud zelf.';qualityList.append(p); }
       for (const issue of quality.issues) { const p=document.createElement('p');p.textContent='• '+issue;qualityList.append(p); }
       details.append(qualityList);
+      const scoreHeading=document.createElement('h4');scoreHeading.className='editor-section-title';scoreHeading.textContent='Prioriteitsscores';
+      const scoreHint=document.createElement('p');scoreHint.className='muted tiny';scoreHint.textContent='Beoordeel elk onderdeel van 1 (laag) tot 5 (hoog). De balken tonen de onderlinge sterkte.';
+      details.append(scoreHeading,scoreHint);
       const scores=document.createElement('div');scores.className='score-editor';
       for (const [key,label] of [['relevance','Relevantie'],['impact','Impact'],['feasibility','Haalbaarheid'],['evidence','Bewijssterkte']]) {
-        const wrapper=document.createElement('label');wrapper.textContent=label+' (1–5)';
-        const select=document.createElement('select');
+        const wrapper=document.createElement('div');wrapper.className='score-item';
+        const scoreTop=document.createElement('div');scoreTop.className='score-item-head';
+        const scoreLabel=document.createElement('label');scoreLabel.textContent=label;
+        const scoreValue=document.createElement('strong');scoreValue.className='score-number';
+        scoreTop.append(scoreLabel,scoreValue);
+        const select=document.createElement('select');select.setAttribute('aria-label',label+' score van 1 tot 5');
         for (const [value,name] of [['','Niet beoordeeld'],...Array.from({length:5},(_,i)=>[String(i+1),String(i+1)])]) {
           const option=document.createElement('option');option.value=value;option.textContent=name;select.append(option);
         }
-        select.value=String(item.scores?.[key]??'');
+        const currentScore=item.scores?.[key];
+        select.value=String(currentScore??'');
+        scoreValue.textContent=currentScore?currentScore+'/5':'—/5';
+        const track=document.createElement('div');track.className='score-track';track.setAttribute('aria-hidden','true');
+        const fill=document.createElement('div');fill.className='score-fill';fill.style.width=((currentScore||0)*20)+'%';
+        track.append(fill);
         select.addEventListener('change',()=>{
           const next={...item.scores};if(select.value) next[key]=Number(select.value);else delete next[key];
           update(index,'scores',next);
         });
-        wrapper.append(select);scores.append(wrapper);
+        wrapper.append(scoreTop,track,select);scores.append(wrapper);
       }
       details.append(scores);
       const refsField=field('Bron-URL’s (één per regel)',(item.sourceRefs||[]).join('\n'),value=>update(index,'sourceRefs',value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean)),true);
-      details.append(refsField);
+      const refsHeading=document.createElement('h4');refsHeading.className='editor-section-title';refsHeading.textContent='Bronverwijzingen';
+      details.append(refsHeading,refsField);
       const remove=document.createElement('button');
       remove.className='secondary';
       remove.textContent='Kans verwijderen';
