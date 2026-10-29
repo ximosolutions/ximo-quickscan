@@ -1,0 +1,146 @@
+import { parseJson } from './contracts.js';
+import { createSession, replaceInput, setOpportunities } from './session.js';
+import { validateResearch, researchPrompt, checkOpportunities, normalizeOpportunity } from './route1.js';
+import { buildReports, reportText } from './report.js';
+
+const $ = id => document.getElementById(id);
+let session = createSession('research');
+let reports = null;
+const setStatus = (message, type = '') => {
+  $('status').textContent = message;
+  $('status').className = type;
+};
+function show(step) {
+  for (let i = 0; i < 4; i++) {
+    $('page' + i).classList.toggle('hidden', i !== step);
+    document.querySelector('[data-step="' + i + '"]').classList.toggle('active', i === step);
+  }
+  setStatus('');
+}
+const field = (label, value, onChange, multiline = false) => {
+  const wrapper = document.createElement('div');
+  const caption = document.createElement('label');
+  caption.textContent = label;
+  const input = document.createElement(multiline ? 'textarea' : 'input');
+  input.value = value || '';
+  input.addEventListener('change', () => onChange(input.value));
+  wrapper.append(caption, input);
+  return wrapper;
+};
+function commit(items) {
+  session = setOpportunities(session, items);
+  reports = null;
+  renderOpportunities();
+}
+function renderOpportunities() {
+  const root = $('opportunities');
+  root.replaceChildren();
+  session.opportunities.forEach((item, index) => {
+    const card = document.createElement('article');
+    card.className = 'card';
+    const title = document.createElement('h3');
+    title.textContent = 'Kans ' + (index + 1) + ': ' + item.title;
+    const toggle = document.createElement('label');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = item.selected;
+    checkbox.addEventListener('change', () => update(index, 'selected', checkbox.checked));
+    toggle.append(checkbox, document.createTextNode('Selecteren voor rapporten'));
+    card.append(title, toggle);
+    for (const [key, name, multiline] of [
+      ['title','Titel',false],['painPoint','Mogelijk pijnpunt',true],
+      ['benefits','Verwacht voordeel',true],['impactSummary','Kwalitatieve impact',true],
+      ['verificationNote','Te verifiëren',true],['internalSolution','Interne oplossingsrichting (niet klantgericht)',true]
+    ]) card.append(field(name, item[key], value => update(index, key, value), multiline));
+    const buttons = document.createElement('div');
+    buttons.className = 'actions';
+    for (const [label, action] of [
+      ['Omhoog', () => move(index,-1)],['Omlaag', () => move(index,1)],
+      ['Verwijderen', () => commit(session.opportunities.filter((_,i) => i !== index))]
+    ]) {
+      const button = document.createElement('button');
+      button.className = 'secondary';
+      button.textContent = label;
+      button.addEventListener('click', action);
+      buttons.append(button);
+    }
+    card.append(buttons);
+    root.append(card);
+  });
+  const qa = checkOpportunities(session.opportunities);
+  $('qa').replaceChildren();
+  for (const [kind, messages] of [['error',qa.errors],['warn',qa.warnings]]) {
+    for (const message of messages) {
+      const p = document.createElement('p');
+      p.className = kind;
+      p.textContent = message;
+      $('qa').append(p);
+    }
+  }
+  $('toReports').disabled = qa.errors.length > 0;
+}
+function update(index, key, value) {
+  const items = session.opportunities.map((item,i) => i === index ? {...item,[key]:value} : item);
+  commit(items);
+}
+function move(index, offset) {
+  const target = index + offset;
+  if (target < 0 || target >= session.opportunities.length) return;
+  const items = [...session.opportunities];
+  [items[index],items[target]] = [items[target],items[index]];
+  commit(items);
+}
+$('start').addEventListener('click', () => {
+  const company = $('company').value.trim();
+  const website = $('website').value.trim();
+  if (!company || !/^https?:\/\//i.test(website)) {
+    setStatus('Vul een bedrijfsnaam en volledige website-URL in.', 'error'); return;
+  }
+  try {
+    session = {...session, company, website};
+    $('prompt').value = researchPrompt(company, website);
+    show(1);
+  } catch (error) { setStatus(error.message, 'error'); }
+});
+$('copyPrompt').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($('prompt').value); setStatus('Onderzoeksprompt gekopieerd.', 'ok'); }
+  catch { $('prompt').select(); setStatus('Selecteer en kopieer de prompt handmatig.', 'warn'); }
+});
+$('researchFile').addEventListener('change', async event => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  if (file.size > 2_000_000) { setStatus('JSON-bestand is groter dan 2 MB.', 'error'); return; }
+  $('researchJson').value = await file.text();
+});
+$('import').addEventListener('click', () => {
+  try {
+    const parsed = validateResearch(parseJson($('researchJson').value));
+    if (parsed.company.toLocaleLowerCase('nl-NL') !== session.company.toLocaleLowerCase('nl-NL')) {
+      if (!window.confirm('De bedrijfsnamen verschillen. Heb je gecontroleerd dat dit hetzelfde bedrijf is?')) return;
+    }
+    if (!window.confirm('Dit vervangt het huidige onderzoek en eventuele kansbewerkingen. Doorgaan?')) return;
+    session = replaceInput(session, 'research', parsed);
+    session = setOpportunities(session, parsed.opportunities);
+    renderOpportunities();
+    show(2);
+  } catch (error) { setStatus(error.message, 'error'); }
+});
+$('add').addEventListener('click', () => {
+  const id = 'manual-' + crypto.randomUUID();
+  commit([...session.opportunities, {...normalizeOpportunity({id,title:'Nieuwe kans'}),selected:false}]);
+});
+$('toReports').addEventListener('click', () => {
+  try {
+    reports = buildReports({...session, research: session.research});
+    $('customerPreview').textContent = reportText(reports.customer);
+    $('internalPreview').textContent = reportText(reports.internal);
+    show(3);
+  } catch (error) { setStatus(error.message, 'error'); }
+});
+for (const [id, step] of [['back1',0],['back2',1],['back3',2]]) $(id).addEventListener('click', () => show(step));
+for (const [id, audience] of [['copyCustomer','customer'],['copyInternal','internal']]) {
+  $(id).addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(reportText(reports[audience])); setStatus('Concept gekopieerd.', 'ok'); }
+    catch { setStatus('Kopiëren mislukt; selecteer de concepttekst handmatig.', 'warn'); }
+  });
+}
