@@ -23,10 +23,22 @@ const setStatus = (message, type = '') => {
   $('status').textContent = message;
   $('status').className = type;
 };
+let currentStep = 0;
+function highestAvailableStep() {
+  if (reports) return 3;
+  if (session.opportunities.length && session.research) return 2;
+  if (session.company && session.website) return 1;
+  return 0;
+}
 function show(step) {
+  if (step > highestAvailableStep()) return;
+  currentStep = step;
   for (let i = 0; i < 4; i++) {
     $('page' + i).classList.toggle('hidden', i !== step);
-    document.querySelector('[data-step="' + i + '"]').classList.toggle('active', i === step);
+    const nav = document.querySelector('[data-step="' + i + '"]');
+    nav.classList.toggle('active', i === step);
+    nav.disabled = i > highestAvailableStep();
+    nav.setAttribute('aria-current',i === step ? 'step' : 'false');
   }
   setStatus('');
 }
@@ -234,3 +246,26 @@ $('downloadZip').addEventListener('click', () => {
     {name:'ximo-intern-rapport.pdf',data:createInternalPdf(reports.internal)}
   ]),'ximo-quickscan-rapporten.zip');
 });
+
+for (const nav of document.querySelectorAll('[data-step]')) {
+  nav.addEventListener('click', () => {
+    const step=Number(nav.dataset.step);
+    if (step <= highestAvailableStep()) show(step);
+  });
+}
+$('newScan').addEventListener('click', () => {
+  if (!window.confirm('Nieuwe scan starten? Alle huidige invoer, kansbewerkingen en goedkeuringen verdwijnen. Download eerst eventuele rapporten of bewaar je onderzoeks-JSON.')) return;
+  releasePreviews();
+  session=createSession('research');
+  reports=null;
+  expandedOpportunityId=null;
+  for (const id of ['company','website','prompt','researchJson','researchFile']) $(id).value='';
+  $('opportunities').replaceChildren();
+  $('qa').replaceChildren();
+  $('customerPreview').removeAttribute('src');
+  $('internalPreview').removeAttribute('src');
+  resetApprovals();
+  show(0);
+  setStatus('Nieuwe scan gestart.', 'ok');
+});
+show(0);
