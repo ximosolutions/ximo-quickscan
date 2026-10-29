@@ -35,52 +35,91 @@ function commit(items) {
   resetApprovals();
   renderOpportunities();
 }
+let expandedOpportunityId = null;
 function renderOpportunities() {
   const root = $('opportunities');
   root.replaceChildren();
-  session.opportunities.forEach((item, index) => {
+  const selectedCount = session.opportunities.filter(item => item.selected).length;
+  const summary = document.createElement('p');
+  summary.className = 'muted';
+  summary.textContent = selectedCount + ' van 3–5 kansen geselecteerd · ' + session.opportunities.length + ' kansen beschikbaar';
+  root.append(summary);
+  session.opportunities.forEach((item,index) => {
     const card = document.createElement('article');
-    card.className = 'card';
-    const title = document.createElement('h3');
-    title.textContent = 'Kans ' + (index + 1) + ': ' + item.title;
+    card.className = 'card opportunity-card';
+    if (item.selected) card.classList.add('is-selected');
+    const top = document.createElement('div');
+    top.className = 'opportunity-top';
     const toggle = document.createElement('label');
+    toggle.className = 'opportunity-toggle';
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = item.selected;
-    checkbox.addEventListener('change', () => update(index, 'selected', checkbox.checked));
-    toggle.append(checkbox, document.createTextNode('Selecteren voor rapporten'));
-    card.append(title, toggle);
-    for (const [key, name, multiline] of [
-      ['title','Titel',false],['painPoint','Mogelijk pijnpunt',true],
-      ['benefits','Verwacht voordeel',true],['impactSummary','Kwalitatieve impact',true],
-      ['verificationNote','Te verifiëren',true],['internalSolution','Interne oplossingsrichting (niet klantgericht)',true]
-    ]) card.append(field(name, item[key], value => update(index, key, value), multiline));
-    const buttons = document.createElement('div');
-    buttons.className = 'actions';
-    for (const [label, action] of [
-      ['Omhoog', () => move(index,-1)],['Omlaag', () => move(index,1)],
-      ['Verwijderen', () => commit(session.opportunities.filter((_,i) => i !== index))]
-    ]) {
-      const button = document.createElement('button');
-      button.className = 'secondary';
-      button.textContent = label;
-      button.addEventListener('click', action);
-      buttons.append(button);
+    checkbox.setAttribute('aria-label','Selecteer '+item.title);
+    checkbox.addEventListener('change',()=>update(index,'selected',checkbox.checked));
+    toggle.append(checkbox);
+    const info = document.createElement('div');
+    info.className = 'opportunity-info';
+    const title = document.createElement('strong');
+    title.textContent = (index+1)+'. '+item.title;
+    const description = document.createElement('p');
+    description.className = 'opportunity-summary';
+    description.textContent = item.painPoint || 'Nog geen pijnpunt beschreven';
+    info.append(title,description);
+    const controls = document.createElement('div');
+    controls.className = 'opportunity-controls';
+    const edit = document.createElement('button');
+    edit.className = 'secondary';
+    const expanded = expandedOpportunityId === item.id;
+    edit.textContent = expanded ? 'Sluiten' : 'Details';
+    edit.setAttribute('aria-expanded',String(expanded));
+    edit.addEventListener('click',()=>{expandedOpportunityId=expanded?null:item.id;renderOpportunities();});
+    controls.append(edit);
+    for (const [label,offset] of [['↑',-1],['↓',1]]) {
+      const button=document.createElement('button');
+      button.className='secondary compact';
+      button.textContent=label;
+      button.title=offset<0?'Kans omhoog':'Kans omlaag';
+      button.setAttribute('aria-label',button.title+': '+item.title);
+      button.disabled=index+offset<0||index+offset>=session.opportunities.length;
+      button.addEventListener('click',()=>move(index,offset));
+      controls.append(button);
     }
-    card.append(buttons);
+    top.append(toggle,info,controls);
+    card.append(top);
+    if (expanded) {
+      const details=document.createElement('div');
+      details.className='opportunity-details';
+      for (const [key,name,multiline] of [
+        ['title','Titel',false],['painPoint','Mogelijk pijnpunt',true],
+        ['benefits','Verwacht voordeel',true],['impactSummary','Kwalitatieve impact',true],
+        ['feasibilitySummary','Haalbaarheid',true],['verificationNote','Te verifiëren',true],
+        ['internalSolution','Interne oplossingsrichting (niet klantgericht)',true]
+      ]) details.append(field(name,item[key],value=>update(index,key,value),multiline));
+      const evidence=document.createElement('p');
+      evidence.className='muted tiny';
+      evidence.textContent='Onderbouwing: '+(item.evidenceType||'niet beoordeeld')+' · Bronnen: '+(item.sourceRefs?.length||0);
+      details.append(evidence);
+      const remove=document.createElement('button');
+      remove.className='secondary';
+      remove.textContent='Kans verwijderen';
+      remove.addEventListener('click',()=>{expandedOpportunityId=null;commit(session.opportunities.filter((_,i)=>i!==index));});
+      details.append(remove);
+      card.append(details);
+    }
     root.append(card);
   });
-  const qa = checkOpportunities(session.opportunities);
+  const qa=checkOpportunities(session.opportunities);
   $('qa').replaceChildren();
-  for (const [kind, messages] of [['error',qa.errors],['warn',qa.warnings]]) {
-    for (const message of messages) {
-      const p = document.createElement('p');
-      p.className = kind;
-      p.textContent = message;
+  for (const [kind,messages] of [['error',qa.errors],['warn',qa.warnings]]) {
+    for(const message of messages) {
+      const p=document.createElement('p');
+      p.className=kind;
+      p.textContent=message;
       $('qa').append(p);
     }
   }
-  $('toReports').disabled = qa.errors.length > 0;
+  $('toReports').disabled=qa.errors.length>0;
 }
 function update(index, key, value) {
   const items = session.opportunities.map((item,i) => i === index ? {...item,[key]:value} : item);
@@ -129,6 +168,7 @@ $('import').addEventListener('click', () => {
     resetApprovals();
     session = replaceInput(session, 'research', parsed);
     session = setOpportunities(session, parsed.opportunities);
+    expandedOpportunityId = null;
     renderOpportunities();
     show(2);
   } catch (error) { setStatus(error.message, 'error'); }
