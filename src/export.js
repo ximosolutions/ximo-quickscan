@@ -181,7 +181,7 @@ function chapterLines(report,index) {
   }else if(index===2){
     report.opportunities.slice(0,internal?5:4).forEach((op,i)=>add(String(i+1).padStart(2,'0')+' / '+op.title,op.painPoint||'Mogelijk knelpunt, nog te verifiëren'));
   }else if(index===3){
-    report.opportunities.slice(0,5).forEach((op,i)=>add(String(i+1).padStart(2,'0')+' / '+op.title,op.benefits||'Verwachte voordelen worden besproken'));
+    report.opportunities.slice(0,5).forEach((op,i)=>add(String(i+1).padStart(2,'0')+' / '+op.title,internal ? ('Interne oplossingsrichting: '+(op.internalSolution||'Nog uit te werken')) : (op.benefits||'Verwachte voordelen worden besproken')));
   }else if(index===4){
     report.opportunities.slice(0,internal?5:4).forEach((op,i)=>add(String(i+1).padStart(2,'0')+' / '+op.title,(op.impactSummary||'Impact te toetsen')+(internal?' | Haalbaarheid: '+(op.feasibilitySummary||'Te beoordelen'):'')));
   }else{
