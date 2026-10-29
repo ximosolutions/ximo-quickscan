@@ -1,6 +1,6 @@
 import { parseJson } from './contracts.js';
 import { createSession, replaceInput, setOpportunities } from './session.js';
-import { validateResearch, researchPrompt, checkOpportunities, researchQuality, normalizeOpportunity, opportunityPriority, prioritizeOpportunities } from './route1.js';
+import { validateResearch, researchPrompt, checkOpportunities, researchQuality, normalizeOpportunity, opportunityPriority, prioritizeOpportunities, opportunityQuality } from './route1.js';
 import { buildReports, reportText } from './report.js';
 import { privacyWarnings } from './privacy.js';
 import { createCustomerPdf, createInternalPdf, zipFiles, download } from './export.js';
@@ -99,6 +99,11 @@ function renderOpportunities() {
     scoreInfo.className='muted tiny';
     scoreInfo.textContent=priority.complete?'Indicatieve prioriteit: '+priority.score+'/100 · '+priority.label:'Prioriteit nog niet beoordeeld · scores ontbreken';
     info.append(scoreInfo);
+    const quality=opportunityQuality(item,session.research);
+    const qualityInfo=document.createElement('p');
+    qualityInfo.className='tiny '+(quality.status==='Gegevens aanwezig'?'ok':quality.status==='Verificatie nodig'?'warn':'error');
+    qualityInfo.textContent=quality.status+' · '+quality.linkedSources+'/'+quality.sourceCount+' bronnen gekoppeld'+(quality.issues.length?' · '+quality.issues.length+' aandachtspunten':'');
+    info.append(qualityInfo);
     const controls = document.createElement('div');
     controls.className = 'opportunity-controls';
     const edit = document.createElement('button');
@@ -140,6 +145,29 @@ function renderOpportunities() {
       evidence.className='muted tiny';
       evidence.textContent='Onderbouwing: '+(item.evidenceType||'niet beoordeeld')+' · Bronnen: '+(item.sourceRefs?.length||0);
       details.append(evidence);
+      const qualityList=document.createElement('div');
+      qualityList.className='quality-issues';
+      const heading=document.createElement('strong');heading.textContent='Kwaliteitscontrole';qualityList.append(heading);
+      if (!quality.issues.length) { const p=document.createElement('p');p.textContent='Geen ontbrekende velden vastgesteld. Controleer broninhoud zelf.';qualityList.append(p); }
+      for (const issue of quality.issues) { const p=document.createElement('p');p.textContent='• '+issue;qualityList.append(p); }
+      details.append(qualityList);
+      const scores=document.createElement('div');scores.className='score-editor';
+      for (const [key,label] of [['relevance','Relevantie'],['impact','Impact'],['feasibility','Haalbaarheid'],['evidence','Bewijssterkte']]) {
+        const wrapper=document.createElement('label');wrapper.textContent=label+' (1–5)';
+        const select=document.createElement('select');
+        for (const [value,name] of [['','Niet beoordeeld'],...Array.from({length:5},(_,i)=>[String(i+1),String(i+1)])]) {
+          const option=document.createElement('option');option.value=value;option.textContent=name;select.append(option);
+        }
+        select.value=String(item.scores?.[key]??'');
+        select.addEventListener('change',()=>{
+          const next={...item.scores};if(select.value) next[key]=Number(select.value);else delete next[key];
+          update(index,'scores',next);
+        });
+        wrapper.append(select);scores.append(wrapper);
+      }
+      details.append(scores);
+      const refsField=field('Bron-URL’s (één per regel)',(item.sourceRefs||[]).join('\\n'),value=>update(index,'sourceRefs',value.split(/\\r?\\n/).map(x=>x.trim()).filter(Boolean)),true);
+      details.append(refsField);
       const remove=document.createElement('button');
       remove.className='secondary';
       remove.textContent='Kans verwijderen';
