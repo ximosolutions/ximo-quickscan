@@ -2,6 +2,7 @@ import { parseJson } from './contracts.js';
 import { createSession, replaceInput, setOpportunities } from './session.js';
 import { validateResearch, researchPrompt, checkOpportunities, normalizeOpportunity } from './route1.js';
 import { buildReports, reportText } from './report.js';
+import { privacyWarnings } from './privacy.js';
 
 const $ = id => document.getElementById(id);
 let session = createSession('research');
@@ -100,6 +101,8 @@ $('start').addEventListener('click', () => {
     session = {...session, company, website};
     $('prompt').value = researchPrompt(company, website);
     show(1);
+    const warnings = privacyWarnings({company,website});
+    if (warnings.length) setStatus('Privacycontrole: controleer herkenbare gegevens voordat je de prompt extern deelt.', 'warn');
   } catch (error) { setStatus(error.message, 'error'); }
 });
 $('copyPrompt').addEventListener('click', async () => {
@@ -115,6 +118,8 @@ $('researchFile').addEventListener('change', async event => {
 $('import').addEventListener('click', () => {
   try {
     const parsed = validateResearch(parseJson($('researchJson').value));
+    const ids = parsed.opportunities.map(item => item.id);
+    if (new Set(ids).size !== ids.length) throw new Error('Onderzoeks-JSON bevat dubbele kans-ID’s. Corrigeer dit eerst.');
     if (parsed.company.toLocaleLowerCase('nl-NL') !== session.company.toLocaleLowerCase('nl-NL')) {
       if (!window.confirm('De bedrijfsnamen verschillen. Heb je gecontroleerd dat dit hetzelfde bedrijf is?')) return;
     }
