@@ -100,6 +100,12 @@ button{font-weight:600}
 /* Match compact Ximo Intro header footprint */
 .site-brand .official-quickscan-logo{width:220px;max-width:100%;height:auto}
 @media(max-width:600px){.site-brand .official-quickscan-logo{width:190px}}
+
+/* Center logo vertically within the navigation bar, including on mobile */
+.site-header{align-items:center}
+.site-brand{display:flex;align-items:center;align-self:stretch}
+.site-brand .official-quickscan-logo{display:block}
+@media(max-width:700px){.site-header{align-items:center}.site-brand{align-self:auto}}
 </style>
 </head>
 <body><div id="progressTop" class="progress-top" role="progressbar" aria-label="Voortgang Quickscan" aria-valuemin="0" aria-valuemax="4" aria-valuenow="1"></div><header class="site-header"><div class="site-brand"><img class="official-quickscan-logo" src="./assets/official-quickscan.svg" alt="XIMO / QUICKSCAN · Trusted AI Partner"></div><div class="header-actions"><span class="pill">V3 · ONTWIKKELVERSIE</span><button id="newScan" class="secondary new-scan" type="button">+ Nieuwe scan</button></div></header><main>
