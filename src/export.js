@@ -119,28 +119,46 @@ function pdfDocument(pages,width,height) {
   chunks.push('trailer\n<< /Size '+(objects.length+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF');
   return bytes(chunks.join(''));
 }
+
+const compact = (value,max=220) => {
+  const s=String(value??'').replace(/\\s+/g,' ').trim();
+  return s.length>max?s.slice(0,max-1).replace(/\\s+\\S*$/,'')+'…':s;
+};
+const sourceText = (item) => typeof item==='string'?item:String(item?.url||item?.title||item?.publisher||'');
+const marketText = (item) => typeof item==='string'?item:String(item?.trend||item?.description||item?.title||item?.summary||'');
+const competitorText = (item) => typeof item==='string'?item:String(item?.name||'Concurrent')+': '+String(item?.comparison||item?.description||'Vergelijkingspunt nog te verifiëren');
 function chapterLines(report,index) {
-  const lines = [{text:report.chapters[index],title:true}];
-  if (index === 0) {
-    lines.push({text:'Bedrijf: '+report.company},{text:'Website: '+report.website},{text:report.summary || 'Uitgangssituatie wordt tijdens het gesprek geverifieerd.'});
-  } else if (index === 1) {
-    lines.push({text:'Marktontwikkelingen en externe aannames vragen verdere verificatie.'});
-  } else if (index === 2) {
-    lines.push({text:'Mogelijke pijnpunten op basis van extern onderzoek.'});
-    for (const op of report.opportunities) lines.push({text:op.title+': '+(op.painPoint||'Te verifiëren')});
-  } else if (index === 3) {
-    for (const op of report.opportunities) {
-      lines.push({text:op.title+' — '+(op.benefits||op.painPoint||'Te verifiëren'),title:true});
-      if (report.audience === 'internal') {
-        lines.push({text:'Oplossingsrichting: '+(op.internalSolution||'Nog uit te werken')});
-      }
+  const internal=report.audience==='internal';
+  const lines=[{text:report.chapters[index],title:true}];
+  const add=(heading,description)=>lines.push({text:compact(heading,95)+' | '+compact(description,internal?300:180)});
+  if(index===0){
+    lines.push({text:'Bedrijf: '+report.company});
+    lines.push({text:'Website: '+report.website});
+    lines.push({text:compact(report.summary||'Bedrijfsprofiel op basis van publiek beschikbare informatie.',internal?620:300)});
+    if(internal) lines.push({text:'Status: openbare feiten en aannames onderscheiden; interne processen niet bevestigd.'});
+  }else if(index===1){
+    const trends=(report.market||[]).slice(0,internal?5:3);
+    if(trends.length)trends.forEach((x,i)=>add('Ontwikkeling '+(i+1),marketText(x)));
+    else lines.push({text:'Geen onafhankelijk bevestigde markttrends aangeleverd. Te onderzoeken in klantgesprek.'});
+    if(internal){
+      (report.competitors||[]).slice(0,3).forEach((x,i)=>add('Concurrent '+(i+1),competitorText(x)));
     }
-  } else if (index === 4) {
-    for (const op of report.opportunities) lines.push({text:op.title+': '+(op.impactSummary||'Impact nog te bepalen')});
-    lines.push({text:'Geen financiële berekening: route 1 werkt met kwalitatieve impact.'});
-  } else {
-    lines.push({text:'Bespreek de kansen en verifieer de belangrijkste aannames met de klant.'});
-    if (report.audience === 'internal') for (const op of report.opportunities) lines.push({text:op.title+': '+(op.verificationNote||'Welke concrete knelpunten ervaart de klant?')});
+  }else if(index===2){
+    report.opportunities.slice(0,internal?5:4).forEach((op,i)=>add(String(i+1).padStart(2,'0')+' / '+op.title,op.painPoint||'Mogelijk knelpunt, nog te verifiëren'));
+  }else if(index===3){
+    report.opportunities.slice(0,5).forEach((op,i)=>add(String(i+1).padStart(2,'0')+' / '+op.title,op.benefits||'Verwachte voordelen worden besproken'));
+  }else if(index===4){
+    report.opportunities.slice(0,internal?5:4).forEach((op,i)=>add(String(i+1).padStart(2,'0')+' / '+op.title,(op.impactSummary||'Impact te toetsen')+(internal?' | Haalbaarheid: '+(op.feasibilitySummary||'Te beoordelen'):'')));
+  }else{
+    if(internal){
+      report.opportunities.slice(0,5).forEach((op,i)=>add(String(i+1).padStart(2,'0')+' / '+op.title,op.verificationNote||'Welke knelpunten en prioriteiten herkent de klant?'));
+      const refs=(report.sources||[]).slice(0,5).map(sourceText).filter(Boolean);
+      if(refs.length) lines.push({text:'Bronnen (selectie): '+refs.join(' | ')});
+    }else{
+      lines.push({text:'Herkennen jullie deze kansen in de dagelijkse praktijk?'});
+      lines.push({text:'Welke uitdaging verdient als eerste aandacht?'});
+      lines.push({text:'Samen bepalen we een praktische volgende stap.'});
+    }
   }
   return lines;
 }
