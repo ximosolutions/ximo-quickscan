@@ -97,3 +97,17 @@ test('session import rejects invalid versions and missing research',()=>{
  assert.throws(()=>importSession(JSON.stringify({schema:'ximo-quickscan-session',version:99})),/Onbekend/);
  assert.throws(()=>importSession(JSON.stringify({schema:'ximo-quickscan-session',version:1,company:'Test BV',website:'https://example.org',opportunities:[opportunity('k1')]})),/zonder onderzoek/);
 });
+
+test('duplicate opportunity titles are rejected even with unique IDs',()=>{
+ const a=opportunity('a');const b={...opportunity('b'),title:'  KANS A  '};
+ assert.throws(()=>validateResearch({...research,opportunities:[a,b]}),/dubbele kanstitels/);
+});
+test('research import rejects more than 100 opportunities',()=>{
+ assert.throws(()=>validateResearch({...research,opportunities:Array.from({length:101},(_,i)=>opportunity('k'+i))}),/maximaal 100/);
+});
+test('source URLs are preserved but invalid links flagged',()=>{
+ const item={...opportunity('a'),sourceRefs:['https://example.org/onderzoek','not-a-url','https://example.org/onderzoek']};
+ const imported=validateResearch({...research,opportunities:[item]}).opportunities[0];
+ assert.equal(imported.sourceRefs.length,2);
+ assert.ok(opportunityQuality(imported,research).issues.some(issue=>issue.includes('http(s)-URL')));
+});
