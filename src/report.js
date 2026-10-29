@@ -26,7 +26,7 @@ export function reportText(report) {
     if (index === 0) lines.push(report.reportData?.executiveSummary || report.summary);
     if (index === 3) {
       for (const item of report.opportunities) {
-        lines.push(item.title, item.painPoint || '', item.benefits || '');
+        lines.push(item.title, item.painPoint || '', item.solution || '', item.example || '', item.benefits || '');
         if (report.audience === 'internal') {
           lines.push(item.internalSolution || '', ...(item.sourceRefs || []));
         }
