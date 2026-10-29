@@ -22,3 +22,19 @@ test('zip includes exactly two named PDF files',()=>{
  assert.equal(zip.type,'application/zip');
  assert.ok(zip.size>1000);
 });
+
+test('internal longlist remains available and customer excludes internal metadata',()=>{
+ const items=[...opportunities,{id:'k4',title:'Extra kans',painPoint:'Vervolgonderzoek',selected:false,internalSolution:'SECRET_LONG_LIST'}];
+ const pair=buildReports({company:'Voorbeeld BV',website:'https://voorbeeld.nl',
+  research:{summary:'Extern',reportData:{executiveSummary:'Openbaar',internalNotes:'SECRET_METADATA',pilot:{steps:['Verkennen'],privateBudget:'SECRET_BUDGET'}}},
+  opportunities:items});
+ assert.equal(pair.internal.opportunities.length,4);
+ assert.equal(pair.customer.opportunities.length,4);
+ const customer=decode(createCustomerPdf(pair.customer));
+ const internal=decode(createInternalPdf(pair.internal));
+ assert.ok(!customer.includes('SECRET_METADATA'));
+ assert.ok(!customer.includes('SECRET_BUDGET'));
+ assert.ok(!customer.includes('SECRET_LONG_LIST'));
+ assert.ok(internal.includes('SECRET_LONG_LIST'));
+ assert.ok(customer.includes('Extra kans'));
+});
