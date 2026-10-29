@@ -88,9 +88,11 @@ function pdfDocument(pages,width,height) {
         if(top-cardH<78)break;
         rect(out,x,top-cardH,cardW,cardH,'0.93 0.96 0.96');
         rect(out,x,top-cardH,4,cardH,'0.71 1 0.45');
-        const label=entry.title?'AI-KANS '+String(shown+1).padStart(2,'0'):'INZICHT '+String(shown+1).padStart(2,'0');
-        txt(out,label,x+17,top-23,wide?10:9,'0.37 0.48 0.51',true);
-        paragraph(out,entry.text,x+17,top-46,cardW-34,wide?11:10,wide?16:15,wide?3:3,ink,entry.title);
+        const [rawHeading,...rest]=entry.text.split(' | ');
+        const hasHeading=rest.length>0;
+        const label=hasHeading?rawHeading:(entry.title?'AI-KANS '+String(shown+1).padStart(2,'0'):'INZICHT '+String(shown+1).padStart(2,'0'));
+        paragraph(out,label,x+17,top-23,cardW-34,wide?12:11,wide?15:14,2,ink,true);
+        paragraph(out,hasHeading?rest.join(' | '):entry.text,x+17,top-(hasHeading?57:46),cardW-34,wide?11:10,wide?16:15,wide?3:3,'0.25 0.34 0.39');
         shown++;
       }
       if(!shown){
@@ -121,8 +123,8 @@ function pdfDocument(pages,width,height) {
 }
 
 const compact = (value,max=220) => {
-  const s=String(value??'').replace(/\\s+/g,' ').trim();
-  return s.length>max?s.slice(0,max-1).replace(/\\s+\\S*$/,'')+'…':s;
+  const s=String(value??'').replace(/\s+/g,' ').trim();
+  return s.length>max?s.slice(0,max-1).replace(/\s+\S*$/,'')+'…':s;
 };
 const sourceText = (item) => typeof item==='string'?item:String(item?.url||item?.title||item?.publisher||'');
 const marketText = (item) => typeof item==='string'?item:String(item?.trend||item?.description||item?.title||item?.summary||'');
