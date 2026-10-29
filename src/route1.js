@@ -87,5 +87,5 @@ export function researchPrompt(company, website) {
     'JSON-CONTRACT: lever een geldig JSON-object volgens dit schema (version 2). Vul alle onderdelen inhoudelijk in; neem alle gevonden bronnen op in sources. Gebruik unieke kans-IDs en voor scores alleen gehele getallen 1–5. Voor evidenceType gebruik feit, afleiding of hypothese:',
     JSON.stringify(example,null,2),
     'Geef alleen een korte bevestiging en een downloadlink naar het bestand. Geen ZIP, JSONL of markdown-codeblok. Als bestandsgeneratie niet mogelijk is, meld dat expliciet en geef het volledige JSON-object als terugvaloptie.'
-  ].join('\\n');
+  ].join('\n');
 }
