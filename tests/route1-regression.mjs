@@ -19,7 +19,7 @@ const research = {
 
 test('research prompt V3 explicitly requires timestamp and unique suffix',()=>{
   const prompt=researchPrompt('Test BV','https://example.org');
-  assert.match(prompt,/RESEARCH ENGINE V3/);
+  assert.match(prompt,/RESEARCH ENGINE V4/);
   assert.match(prompt,/YYYYMMDD-HHMMSS-BEDRIJF-ximo-research-XXXXXX\.json/);
   assert.match(prompt,/Gebruik als BEDRIJF: test-bv/);
   assert.match(prompt,/BRONNENKWALITEIT/);
