@@ -1,3 +1,4 @@
+import { exportSession, importSession } from './session-file.js?v=71';
 import { parseJson } from './contracts.js';
 import { createSession, replaceInput, setOpportunities } from './session.js';
 import { validateResearch, researchPrompt, checkOpportunities, researchQuality, normalizeOpportunity, opportunityPriority, prioritizeOpportunities, opportunityQuality } from './route1.js?v=60';
@@ -317,6 +318,34 @@ for (const nav of document.querySelectorAll('[data-step]')) {
     if (step <= highestAvailableStep()) show(step);
   });
 }
+$('saveScan').addEventListener('click',()=>{
+  if(!session.company){setStatus('Vul eerst een bedrijfsnaam en website in.','warn');return;}
+  try {
+    const data=exportSession(session);
+    const filename='ximo-quickscan-'+new Date().toISOString().slice(0,10)+'.json';
+    download(new Blob([data],{type:'application/json'}),filename);
+    setStatus('Quickscan-sessie gedownload. Bewaar het bestand veilig; het kan onderzoeksgegevens bevatten.','ok');
+  } catch(error){setStatus(error.message,'error');}
+});
+$('loadScan').addEventListener('change',async event=>{
+  const file=event.target.files?.[0];
+  if(!file)return;
+  try {
+    if(file.size>2_000_000)throw new Error('Sessiebestand is groter dan 2 MB.');
+    const restored=importSession(await file.text());
+    if(!window.confirm('De huidige scan vervangen door '+restored.company+'? Niet-bewaarde wijzigingen gaan verloren.'))return;
+    releasePreviews();reports=null;expandedOpportunityId=null;
+    session=restored;
+    $('company').value=session.company;
+    $('website').value=session.website;
+    $('prompt').value=researchPrompt(session.company,session.website);
+    $('researchJson').value=session.research?JSON.stringify(session.research.original,null,2):'';
+    $('customerPreview').removeAttribute('src');$('internalPreview').removeAttribute('src');
+    resetApprovals();renderOpportunities();show(session.opportunities.length?2:1);
+    setStatus('Sessie hersteld. Rapporten moeten opnieuw worden goedgekeurd.','ok');
+  } catch(error){setStatus('Sessie openen mislukt: '+error.message,'error');}
+  finally{event.target.value='';}
+});
 $('newScan').addEventListener('click', () => {
   if (!window.confirm('Nieuwe scan starten? Alle huidige invoer, kansbewerkingen en goedkeuringen verdwijnen. Download eerst eventuele rapporten of bewaar je onderzoeks-JSON.')) return;
   releasePreviews();
