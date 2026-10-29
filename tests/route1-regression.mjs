@@ -1,3 +1,4 @@
+import { exportSession, importSession } from '../src/session-file.js';
 // Run with: node --experimental-default-type=module --test tests/route1-regression.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -81,4 +82,18 @@ test('customer export excludes internal solution and source references',()=>{
 });
 test('different trade names trigger review rather than a hard rejection',()=>{
   assert.equal(compareCompanyNames('Voorbeeld BV','Andere Handelsnaam').status,'uncertain');
+});
+
+test('saved session restores opportunities but never report approvals',()=>{
+ const original={...createSession('research'),company:'Test BV',website:'https://example.org',research:{original:research},opportunities:[{...opportunity('k1'),selected:true}]};
+ const restored=importSession(exportSession(original));
+ assert.equal(restored.company,'Test BV');
+ assert.equal(restored.opportunities[0].title,'Kans k1');
+ assert.equal(restored.approvals.customer,false);
+ assert.equal(restored.approvals.internal,false);
+});
+test('session import rejects invalid versions and missing research',()=>{
+ assert.throws(()=>importSession('{'),/Geen geldig/);
+ assert.throws(()=>importSession(JSON.stringify({schema:'ximo-quickscan-session',version:99})),/Onbekend/);
+ assert.throws(()=>importSession(JSON.stringify({schema:'ximo-quickscan-session',version:1,company:'Test BV',website:'https://example.org',opportunities:[opportunity('k1')]})),/zonder onderzoek/);
 });
