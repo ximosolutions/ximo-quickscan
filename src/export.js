@@ -49,10 +49,20 @@ function pdfDocument(pages,width,height) {
         const k=.55228475,r=radius;
         out.push((cx+r)+' '+cy+' m '+(cx+r)+' '+(cy+k*r)+' '+(cx+k*r)+' '+(cy+r)+' '+cx+' '+(cy+r)+' c '+(cx-k*r)+' '+(cy+r)+' '+(cx-r)+' '+(cy+k*r)+' '+(cx-r)+' '+cy+' c '+(cx-r)+' '+(cy-k*r)+' '+(cx-k*r)+' '+(cy-r)+' '+cx+' '+(cy-r)+' c '+(cx+k*r)+' '+(cy-r)+' '+(cx+r)+' '+(cy-k*r)+' '+(cx+r)+' '+cy+' c S');
       }
-      txt(out,'XIMO / SOLUTIONS',margin,height-53,wide?16:14,lime,true);
+      txt(out,'XIMO',margin,height-53,wide?23:18,'1 1 1',true);
+      txt(out,'/ SOLUTIONS',margin+(wide?82:64),height-53,wide?20:16,lime,true);
       txt(out,(index===0?'01 / INTRODUCTIE':'06 / VERVOLG & GESPREK'),margin,height-115,10,lime,true);
       const heading=entries.find(e=>e.title)?.text||'Quickscan';
-      let y=paragraph(out,heading,margin,height-(wide?190:210),width*.70,wide?38:30,wide?46:37,3,'1 1 1',true)-20;
+      if(pageIndex===0){
+        txt(out,'AI-kansen voor',margin,height-(wide?185:200),wide?43:31,'1 1 1',true);
+        const company=entries.find(e=>/^Bedrijf:/.test(e.text))?.text.replace(/^Bedrijf:\\s*/,'')||'uw organisatie';
+        paragraph(out,company,margin,height-(wide?245:245),width*.65,wide?37:27,wide?44:35,2,'0.71 1 0.45',true);
+        txt(out,'EXTERNE QUICKSCAN / GESPREKSSTARTER',margin,height-(wide?318:348),11,'0.77 0.86 0.87',true);
+      } else {
+        txt(out,'Van kansen naar',margin,height-(wide?193:205),wide?40:30,'1 1 1',true);
+        txt(out,'vooruitgang.',margin,height-(wide?245:248),wide?43:32,'0.71 1 0.45',true);
+      }
+      let y=height-(wide?365:395);
       const content=entries.filter(e=>!e.title);
       for(const entry of content.slice(0,index===0?3:4)){
         if(y<105)break;
@@ -67,24 +77,26 @@ function pdfDocument(pages,width,height) {
       txt(out,String(index+1).padStart(2,'0')+' / '+String(pages.length).padStart(2,'0'),width-margin-42,height-35,10,'0.72 0.82 0.85');
       txt(out,String(index+1).padStart(2,'0')+' / QUICKSCAN',margin,height-92,10,muted,true);
       const heading=entries.find(e=>e.title)?.text||'Analyse';
-      let y=paragraph(out,heading,margin,height-135,width-margin*2,wide?30:25,wide?38:32,2,ink,true)-16;
+      let y=paragraph(out,heading,margin,height-135,width-margin*2,wide?36:27,wide?44:35,2,ink,true)-16;
       rect(out,margin,y,width-margin*2,3,lime);y-=36;
       const content=entries.filter(e=>!e.title);
-      const maxY=wide?65:75;
-      for(let i=0;i<content.length;i++){
-        const entry=content[i];
-        if(y<maxY+45)break;
-        const isHeading=entry.title;
-        const sz=isHeading?(wide?15:13):(wide?12:10.5);
-        const lines=wrap(entry.text,Math.floor((width-margin*2-38)/(sz*.54)));
-        const allowed=Math.min(isHeading?2:wide?3:5,Math.max(1,Math.floor((y-maxY-34)/(sz*1.5))));
-        if(!allowed)break;
-        if(isHeading){
-          rect(out,margin,y-18,width-margin*2,29,'0.92 0.96 0.95');
-          txt(out,entry.text,margin+13,y-10,sz,ink,true);y-=42;
-        }else{
-          y=paragraph(out,entry.text,margin+10,y,width-margin*2-30,sz,sz*1.5,allowed,ink)-14;
-        }
+      const gap=wide?17:13, cols=wide?2:1, cardW=(width-margin*2-gap*(cols-1))/cols;
+      const cardH=wide?104:107;
+      let shown=0;
+      for(const entry of content){
+        const col=shown%cols, row=Math.floor(shown/cols), x=margin+col*(cardW+gap), top=y-row*(cardH+gap);
+        if(top-cardH<78)break;
+        rect(out,x,top-cardH,cardW,cardH,'0.93 0.96 0.96');
+        rect(out,x,top-cardH,4,cardH,'0.71 1 0.45');
+        const label=entry.title?'AI-KANS '+String(shown+1).padStart(2,'0'):'INZICHT '+String(shown+1).padStart(2,'0');
+        txt(out,label,x+17,top-23,wide?10:9,'0.37 0.48 0.51',true);
+        paragraph(out,entry.text,x+17,top-46,cardW-34,wide?11:10,wide?16:15,wide?3:3,ink,entry.title);
+        shown++;
+      }
+      if(!shown){
+        rect(out,margin,y-130,width-margin*2,130,'0.93 0.96 0.96');
+        txt(out,'VERKENNING',margin+18,y-28,10,muted,true);
+        paragraph(out,'De belangrijkste inzichten en aannames worden tijdens het gesprek getoetst.',margin+18,y-56,width-margin*2-36,wide?14:12,20,3,ink);
       }
       rect(out,margin,53,width-margin*2,1,'0.84 0.89 0.90');
       txt(out,'XIMO SOLUTIONS  /  QUICKSCAN',margin,34,9,muted);
