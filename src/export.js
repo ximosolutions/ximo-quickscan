@@ -25,18 +25,21 @@ function pdfDocument(pages, width, height) {
   for (const [pageIndex, lines] of pages.entries()) {
     const cover = pageIndex === 0 || pageIndex === pages.length - 1;
     let y = height - (cover ? 145 : 110);
-    const commands = [cover ? '0.03 0.09 0.14 rg' : '1 1 1 rg','0 0 '+width+' '+height+' re f'];
+    const commands = [cover ? '0.024 0.075 0.129 rg' : '1 1 1 rg','0 0 '+width+' '+height+' re f'];
     if (cover) {
       commands.push('0.71 1 0.45 rg', (width-25)+' 0 25 '+height+' re f');
+      commands.push('0.11 0.24 0.30 rg', (width-155)+' 0 85 '+(height*.62)+' re f');
       commands.push('0.71 1 0.45 rg','BT /F1 16 Tf 1 0 0 1 50 '+(height-45)+' Tm (XIMO / SOLUTIONS) Tj ET');
     } else {
-      commands.push('0.03 0.09 0.14 rg','0 '+(height-55)+' '+width+' 55 re f');
+      commands.push('0.024 0.075 0.129 rg','0 '+(height-55)+' '+width+' 55 re f');
       commands.push('0.71 1 0.45 rg','BT /F1 13 Tf 1 0 0 1 50 '+(height-35)+' Tm (XIMO / SOLUTIONS) Tj ET');
-      commands.push('0.03 0.09 0.14 rg','BT /F1 9 Tf 1 0 0 1 50 27 Tm (XIMO SOLUTIONS | VERTROUWELIJK) Tj ET');
+      commands.push('0.15 0.23 0.28 rg','BT /F1 9 Tf 1 0 0 1 50 27 Tm (XIMO SOLUTIONS | QUICKSCAN) Tj ET');
       commands.push('BT /F1 9 Tf 1 0 0 1 '+(width-80)+' 27 Tm ('+(pageIndex+1)+' / '+pages.length+') Tj ET');
       commands.push('0.71 1 0.45 rg','50 '+(height-68)+' '+(width-100)+' 3 re f');
+      commands.push('0.91 0.95 0.95 rg',(width-18)+' 72 8 '+(height-150)+' re f');
     }
-    commands.push(cover ? '1 1 1 rg' : '0.03 0.09 0.14 rg');
+    // Lime is reserved for accents and for text on the dark header; never for body text on white.
+    commands.push(cover ? '1 1 1 rg' : '0.06 0.14 0.19 rg');
     for (const entry of lines) {
       const size = entry.title ? 25 : 12;
       const leading = entry.title ? 36 : 19;
