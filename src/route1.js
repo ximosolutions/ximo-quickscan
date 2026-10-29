@@ -19,7 +19,7 @@ export function validateResearch(data) {
   const names=opportunities.map(item=>item.title.toLocaleLowerCase('nl-NL').replace(/\s+/g,' ').trim());
   if(new Set(names).size!==names.length) throw new ContractError('Het onderzoek bevat dubbele kanstitels. Controleer de kansen vóór import.', 'DUPLICATE_TITLES');
   return { company: data.company.trim(), website: text(data.website) ? data.website.trim() : '',
-    summary: text(data.summary) ? data.summary.trim() : '', market: Array.isArray(data.market) ? data.market : [], competitors: Array.isArray(data.competitors) ? data.competitors : [], sources: Array.isArray(data.sources) ? data.sources : [], opportunities, original: data };
+    summary: text(data.summary) ? data.summary.trim() : '', market: Array.isArray(data.market) ? data.market : [], competitors: Array.isArray(data.competitors) ? data.competitors : [], sources: Array.isArray(data.sources) ? data.sources : [], opportunities, reportData: record(data.reportData) ? data.reportData : {}, original: data };
 }
 
 export function normalizeOpportunity(item, index = 0) {
@@ -37,6 +37,15 @@ export function normalizeOpportunity(item, index = 0) {
     sourceRefs: Array.isArray(item.sourceRefs) ? [...new Set(item.sourceRefs.filter(text).map(ref=>ref.trim()))] : [],
     evidenceType: text(item.evidenceType) ? item.evidenceType.trim() : 'hypothese',
     scores: normalizeScores(item.scores),
+    process: text(item.process) ? item.process.trim() : '',
+    solution: text(item.solution) ? item.solution.trim() : '',
+    example: text(item.example) ? item.example.trim() : '',
+    processSteps: Array.isArray(item.processSteps) ? item.processSteps.filter(text).slice(0,5) : [],
+    validationQuestions: Array.isArray(item.validationQuestions) ? item.validationQuestions.filter(text).slice(0,5) : [],
+    risks: Array.isArray(item.risks) ? item.risks.filter(text) : [],
+    conditions: Array.isArray(item.conditions) ? item.conditions.filter(text) : [],
+    kpis: Array.isArray(item.kpis) ? item.kpis.filter(text) : [],
+    scoreRationale: text(item.scoreRationale) ? item.scoreRationale.trim() : '',
     selected: item.selected !== false
   };
 }
