@@ -19,57 +19,91 @@ function wrap(text, limit) {
   if (line) lines.push(line);
   return lines;
 }
-function pdfDocument(pages, width, height) {
-  const objects = [null, null, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'];
-  const pageIds = [];
-  for (const [pageIndex, lines] of pages.entries()) {
-    const cover = pageIndex === 0 || pageIndex === pages.length - 1;
-    let y = height - (cover ? 145 : 110);
-    const commands = [cover ? '0.024 0.075 0.129 rg' : '1 1 1 rg','0 0 '+width+' '+height+' re f'];
-    if (cover) {
-      commands.push('0.71 1 0.45 rg', (width-25)+' 0 25 '+height+' re f');
-      commands.push('0.11 0.24 0.30 rg', (width-155)+' 0 85 '+(height*.62)+' re f');
-      commands.push('0.71 1 0.45 rg','BT /F1 16 Tf 1 0 0 1 50 '+(height-45)+' Tm (XIMO / SOLUTIONS) Tj ET');
-    } else {
-      commands.push('0.024 0.075 0.129 rg','0 '+(height-55)+' '+width+' 55 re f');
-      commands.push('0.71 1 0.45 rg','BT /F1 13 Tf 1 0 0 1 50 '+(height-35)+' Tm (XIMO / SOLUTIONS) Tj ET');
-      commands.push('0.15 0.23 0.28 rg','BT /F1 9 Tf 1 0 0 1 50 27 Tm (XIMO SOLUTIONS | QUICKSCAN) Tj ET');
-      commands.push('BT /F1 9 Tf 1 0 0 1 '+(width-80)+' 27 Tm ('+(pageIndex+1)+' / '+pages.length+') Tj ET');
-      commands.push('0.71 1 0.45 rg','50 '+(height-68)+' '+(width-100)+' 3 re f');
-      commands.push('0.91 0.95 0.95 rg',(width-18)+' 72 8 '+(height-150)+' re f');
-    }
-    // Lime is reserved for accents and for text on the dark header; never for body text on white.
-    commands.push(cover ? '1 1 1 rg' : '0.06 0.14 0.19 rg');
-    for (const entry of lines) {
-      const size = entry.title ? 25 : 12;
-      const leading = entry.title ? 36 : 19;
-      const maxChars = entry.title ? Math.floor((width-100)/14) : Math.floor((width-100)/6.5);
-      for (const part of wrap(entry.text,maxChars)) {
-        if (y < (cover ? 65 : 65)) break;
-        commands.push('BT /F1 '+size+' Tf 1 0 0 1 50 '+y.toFixed(1)+' Tm ('+escapePdf(part)+') Tj ET');
-        y -= leading;
+
+function pdfDocument(pages,width,height) {
+  const objects=[null,null,'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>'];
+  const pageIds=[], wide=width>700, margin=wide?65:48;
+  const navy='0.024 0.075 0.129', ink='0.07 0.15 0.20', muted='0.38 0.47 0.52', lime='0.71 1 0.45';
+  const rect=(out,x,y,w,h,color)=>out.push(color+' rg',x+' '+y+' '+w+' '+h+' re f');
+  const txt=(out,value,x,y,size=12,color=ink,bold=false)=>{
+    out.push(color+' rg','BT /F'+(bold?'2':'1')+' '+size+' Tf 1 0 0 1 '+x.toFixed(1)+' '+y.toFixed(1)+' Tm ('+escapePdf(value)+') Tj ET');
+  };
+  const paragraph=(out,value,x,y,maxWidth,size=12,leading=18,maxLines=8,color=ink,bold=false)=>{
+    const lines=wrap(value,Math.max(12,Math.floor(maxWidth/(size*.54))));
+    const visible=lines.slice(0,maxLines);
+    visible.forEach((line,i)=>txt(out,line,x,y-i*leading,size,color,bold));
+    if(lines.length>maxLines && visible.length) txt(out,'[Meer informatie in het brononderzoek]',x,y-visible.length*leading,size*.76,muted);
+    return y-visible.length*leading;
+  };
+  for(const [index,entries] of pages.entries()){
+    const dark=index===0||index===pages.length-1;
+    const out=[];
+    rect(out,0,0,width,height,dark?navy:'1 1 1');
+    if(dark){
+      rect(out,width-18,0,18,height,lime);
+      rect(out,width*.79,0,width*.11,height*.57,'0.09 0.22 0.28');
+      // geometric orbit rings, as in the Ximo Intro visual language
+      for(let radius=70;radius<340;radius+=90){
+        const cx=width*.91,cy=height*.56;
+        out.push('0.16 0.31 0.33 RG','0.8 w');
+        const k=.55228475,r=radius;
+        out.push((cx+r)+' '+cy+' m '+(cx+r)+' '+(cy+k*r)+' '+(cx+k*r)+' '+(cy+r)+' '+cx+' '+(cy+r)+' c '+(cx-k*r)+' '+(cy+r)+' '+(cx-r)+' '+(cy+k*r)+' '+(cx-r)+' '+cy+' c '+(cx-r)+' '+(cy-k*r)+' '+(cx-k*r)+' '+(cy-r)+' '+cx+' '+(cy-r)+' c '+(cx+k*r)+' '+(cy-r)+' '+(cx+r)+' '+(cy-k*r)+' '+(cx+r)+' '+cy+' c S');
       }
-      y -= entry.title ? 12 : 7;
+      txt(out,'XIMO / SOLUTIONS',margin,height-53,wide?16:14,lime,true);
+      txt(out,(index===0?'01 / INTRODUCTIE':'06 / VERVOLG & GESPREK'),margin,height-115,10,lime,true);
+      const heading=entries.find(e=>e.title)?.text||'Quickscan';
+      let y=paragraph(out,heading,margin,height-(wide?190:210),width*.70,wide?38:30,wide?46:37,3,'1 1 1',true)-20;
+      const content=entries.filter(e=>!e.title);
+      for(const entry of content.slice(0,index===0?3:4)){
+        if(y<105)break;
+        y=paragraph(out,entry.text,margin,y,width*.64,wide?13:11,wide?21:18,index===0?3:4,'0.79 0.86 0.88')-16;
+      }
+      txt(out,'XIMO SOLUTIONS  /  QUICKSCAN',margin,35,9,'0.63 0.73 0.78');
+      txt(out,String(index+1).padStart(2,'0')+' / '+String(pages.length).padStart(2,'0'),width-margin-55,35,9,'0.63 0.73 0.78');
+    }else{
+      rect(out,0,height-56,width,56,navy);
+      txt(out,'XIMO',margin,height-35,14,'1 1 1',true);
+      txt(out,'/ SOLUTIONS',margin+44,height-35,13,lime,true);
+      txt(out,String(index+1).padStart(2,'0')+' / '+String(pages.length).padStart(2,'0'),width-margin-42,height-35,10,'0.72 0.82 0.85');
+      txt(out,String(index+1).padStart(2,'0')+' / QUICKSCAN',margin,height-92,10,muted,true);
+      const heading=entries.find(e=>e.title)?.text||'Analyse';
+      let y=paragraph(out,heading,margin,height-135,width-margin*2,wide?30:25,wide?38:32,2,ink,true)-16;
+      rect(out,margin,y,width-margin*2,3,lime);y-=36;
+      const content=entries.filter(e=>!e.title);
+      const maxY=wide?65:75;
+      for(let i=0;i<content.length;i++){
+        const entry=content[i];
+        if(y<maxY+45)break;
+        const isHeading=entry.title;
+        const sz=isHeading?(wide?15:13):(wide?12:10.5);
+        const lines=wrap(entry.text,Math.floor((width-margin*2-38)/(sz*.54)));
+        const allowed=Math.min(isHeading?2:wide?3:5,Math.max(1,Math.floor((y-maxY-34)/(sz*1.5))));
+        if(!allowed)break;
+        if(isHeading){
+          rect(out,margin,y-18,width-margin*2,29,'0.92 0.96 0.95');
+          txt(out,entry.text,margin+13,y-10,sz,ink,true);y-=42;
+        }else{
+          y=paragraph(out,entry.text,margin+10,y,width-margin*2-30,sz,sz*1.5,allowed,ink)-14;
+        }
+      }
+      rect(out,margin,53,width-margin*2,1,'0.84 0.89 0.90');
+      txt(out,'XIMO SOLUTIONS  /  QUICKSCAN',margin,34,9,muted);
+      txt(out,String(index+1).padStart(2,'0')+' / '+String(pages.length).padStart(2,'0'),width-margin-48,34,9,muted);
     }
-    const stream = commands.join('\n')+'\n';
-    const contentId = objects.length+1;
+    const stream=out.join('\n')+'\n';
+    const contentId=objects.length+1;
     objects.push('<< /Length '+bytes(stream).length+' >>\nstream\n'+stream+'endstream');
-    const pageId = objects.length+1;
-    objects.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+width+' '+height+'] /Resources << /Font << /F1 3 0 R >> >> /Contents '+contentId+' 0 R >>');
+    const pageId=objects.length+1;
+    objects.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+width+' '+height+'] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents '+contentId+' 0 R >>');
     pageIds.push(pageId);
   }
-  objects[0] = '<< /Type /Catalog /Pages 2 0 R >>';
-  objects[1] = '<< /Type /Pages /Kids ['+pageIds.map(id=>id+' 0 R').join(' ')+'] /Count '+pageIds.length+' >>';
-  const chunks = ['%PDF-1.4\n'];
-  const offsets = [0]; let length = bytes(chunks[0]).length;
-  objects.forEach((object,index) => {
-    offsets.push(length);
-    const chunk = (index+1)+' 0 obj\n'+object+'\nendobj\n';
-    chunks.push(chunk); length += bytes(chunk).length;
-  });
-  const xref = length;
+  objects[0]='<< /Type /Catalog /Pages 2 0 R >>';
+  objects[1]='<< /Type /Pages /Kids ['+pageIds.map(id=>id+' 0 R').join(' ')+'] /Count '+pageIds.length+' >>';
+  const chunks=['%PDF-1.4\n'],offsets=[0];let length=bytes(chunks[0]).length;
+  objects.forEach((object,index)=>{offsets.push(length);const chunk=(index+1)+' 0 obj\n'+object+'\nendobj\n';chunks.push(chunk);length+=bytes(chunk).length;});
+  const xref=length;
   chunks.push('xref\n0 '+(objects.length+1)+'\n0000000000 65535 f \n');
-  for (const offset of offsets.slice(1)) chunks.push(String(offset).padStart(10,'0')+' 00000 n \n');
+  for(const offset of offsets.slice(1))chunks.push(String(offset).padStart(10,'0')+' 00000 n \n');
   chunks.push('trailer\n<< /Size '+(objects.length+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF');
   return bytes(chunks.join(''));
 }
