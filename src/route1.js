@@ -11,10 +11,13 @@ export function validateResearch(data) {
   if (!text(data.company) || !Array.isArray(data.opportunities)) {
     throw new ContractError('Bedrijfsnaam of kansenlijst ontbreekt.', 'INVALID_RESEARCH');
   }
+  if (data.opportunities.length > 100) throw new ContractError('Het onderzoek bevat te veel kansen (maximaal 100).', 'TOO_MANY_OPPORTUNITIES');
   const opportunities = data.opportunities.map((item, index) => normalizeOpportunity(item, index));
   if (!opportunities.length) throw new ContractError('Het onderzoek bevat geen AI-kansen.', 'EMPTY_OPPORTUNITIES');
   const ids=opportunities.map(item=>item.id);
   if (new Set(ids).size!==ids.length) throw new ContractError('Het onderzoek bevat dubbele kans-ID’s.', 'DUPLICATE_OPPORTUNITIES');
+  const names=opportunities.map(item=>item.title.toLocaleLowerCase('nl-NL').replace(/\s+/g,' ').trim());
+  if(new Set(names).size!==names.length) throw new ContractError('Het onderzoek bevat dubbele kanstitels. Controleer de kansen vóór import.', 'DUPLICATE_TITLES');
   return { company: data.company.trim(), website: text(data.website) ? data.website.trim() : '',
     summary: text(data.summary) ? data.summary.trim() : '', market: Array.isArray(data.market) ? data.market : [], competitors: Array.isArray(data.competitors) ? data.competitors : [], sources: Array.isArray(data.sources) ? data.sources : [], opportunities, original: data };
 }
@@ -31,7 +34,7 @@ export function normalizeOpportunity(item, index = 0) {
     confidence: text(item.confidence) ? item.confidence.trim() : 'Te verifiëren',
     verificationNote: text(item.verificationNote) ? item.verificationNote.trim() : '',
     internalSolution: text(item.internalSolution) ? item.internalSolution.trim() : '',
-    sourceRefs: Array.isArray(item.sourceRefs) ? item.sourceRefs.filter(text) : [],
+    sourceRefs: Array.isArray(item.sourceRefs) ? [...new Set(item.sourceRefs.filter(ref=>text(ref)&&/^https?:\/\//i.test(ref.trim())).map(ref=>ref.trim()))] : [],
     evidenceType: text(item.evidenceType) ? item.evidenceType.trim() : 'hypothese',
     scores: normalizeScores(item.scores),
     selected: item.selected !== false
