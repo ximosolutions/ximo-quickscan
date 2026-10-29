@@ -20,7 +20,7 @@ function wrap(text, limit) {
   return lines;
 }
 
-function pdfDocument(pages,width,height) {
+function pdfDocument(pages,width,height,theme='customer') {
   const objects=[null,null,'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>'];
   const pageIds=[], wide=width>700, margin=wide?65:48;
   const navy='0.024 0.075 0.129', ink='0.07 0.15 0.20', muted='0.38 0.47 0.52', lime='0.71 1 0.45';
@@ -36,7 +36,7 @@ function pdfDocument(pages,width,height) {
     return y-visible.length*leading;
   };
   for(const [index,entries] of pages.entries()){
-    const dark=index===0||index===pages.length-1;
+    const dark=theme==='customer' && (index===0||index===pages.length-1);
     const out=[];
     rect(out,0,0,width,height,dark?navy:'1 1 1');
     if(dark){
@@ -76,7 +76,7 @@ function pdfDocument(pages,width,height) {
         dot(x,y,j%3===0?1.8:.9,j%4===0?'0.71 1 0.45':'0.22 0.48 0.42');
       }
       // geometric orbit rings, as in the Ximo Intro visual language
-      for(let radius=70;radius<340;radius+=90){
+      for(let radius=105;radius<110;radius+=90){
         const cx=width*.91,cy=height*.56;
         out.push('0.16 0.31 0.33 RG','0.8 w');
         const k=.55228475,r=radius;
@@ -199,11 +199,11 @@ function chapterLines(report,index) {
 }
 export function createCustomerPdf(report) {
   if (report.audience !== 'customer' || report.chapters.length !== 6) throw Error('Ongeldig klantrapport.');
-  return pdfDocument(report.chapters.map((_,i)=>chapterLines(report,i)),960,540);
+  return pdfDocument(report.chapters.map((_,i)=>chapterLines(report,i)),960,540,'customer');
 }
 export function createInternalPdf(report) {
   if (report.audience !== 'internal' || report.chapters.length !== 6) throw Error('Ongeldig intern rapport.');
-  return pdfDocument(report.chapters.map((_,i)=>chapterLines(report,i)),595.28,841.89);
+  return pdfDocument(report.chapters.map((_,i)=>chapterLines(report,i)),595.28,841.89,'internal');
 }
 const u16 = (v) => [v&255,(v>>>8)&255];
 const u32 = (v) => [v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255];
