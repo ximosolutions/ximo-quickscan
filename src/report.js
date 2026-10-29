@@ -23,7 +23,7 @@ export function reportText(report) {
   const lines = [report.company, report.website, report.disclaimer, ''];
   for (const [index, chapter] of report.chapters.entries()) {
     lines.push((index + 1) + '. ' + chapter);
-    if (index === 0) lines.push(report.summary);
+    if (index === 0) lines.push(report.reportData?.executiveSummary || report.summary);
     if (index === 3) {
       for (const item of report.opportunities) {
         lines.push(item.title, item.painPoint || '', item.benefits || '');
