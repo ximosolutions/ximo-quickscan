@@ -3,6 +3,7 @@ import { createSession, replaceInput, setOpportunities } from './session.js';
 import { validateResearch, researchPrompt, checkOpportunities, normalizeOpportunity } from './route1.js';
 import { buildReports, reportText } from './report.js';
 import { privacyWarnings } from './privacy.js';
+import { createCustomerPdf, createInternalPdf, zipFiles, download } from './export.js';
 
 const $ = id => document.getElementById(id);
 let session = createSession('research');
@@ -31,6 +32,7 @@ const field = (label, value, onChange, multiline = false) => {
 function commit(items) {
   session = setOpportunities(session, items);
   reports = null;
+  resetApprovals();
   renderOpportunities();
 }
 function renderOpportunities() {
@@ -124,6 +126,7 @@ $('import').addEventListener('click', () => {
       if (!window.confirm('De bedrijfsnamen verschillen. Heb je gecontroleerd dat dit hetzelfde bedrijf is?')) return;
     }
     if (!window.confirm('Dit vervangt het huidige onderzoek en eventuele kansbewerkingen. Doorgaan?')) return;
+    resetApprovals();
     session = replaceInput(session, 'research', parsed);
     session = setOpportunities(session, parsed.opportunities);
     renderOpportunities();
@@ -139,6 +142,7 @@ $('toReports').addEventListener('click', () => {
     reports = buildReports({...session, research: session.research});
     $('customerPreview').textContent = reportText(reports.customer);
     $('internalPreview').textContent = reportText(reports.internal);
+    resetApprovals();
     show(3);
   } catch (error) { setStatus(error.message, 'error'); }
 });
@@ -149,3 +153,33 @@ for (const [id, audience] of [['copyCustomer','customer'],['copyInternal','inter
     catch { setStatus('Kopiëren mislukt; selecteer de concepttekst handmatig.', 'warn'); }
   });
 }
+
+function resetApprovals() {
+  $('approveCustomer').checked = false;
+  $('approveInternal').checked = false;
+  updateExportButtons();
+}
+function updateExportButtons() {
+  $('downloadCustomer').disabled = !reports || !$('approveCustomer').checked;
+  $('downloadInternal').disabled = !reports || !$('approveInternal').checked;
+  $('downloadZip').disabled = !reports || !$('approveCustomer').checked || !$('approveInternal').checked;
+}
+$('approveCustomer').addEventListener('change', updateExportButtons);
+$('approveInternal').addEventListener('change', updateExportButtons);
+const customerFile = () => new Blob([createCustomerPdf(reports.customer)], {type:'application/pdf'});
+const internalFile = () => new Blob([createInternalPdf(reports.internal)], {type:'application/pdf'});
+$('downloadCustomer').addEventListener('click', () => {
+  if ($('downloadCustomer').disabled) return;
+  download(customerFile(), 'ximo-klantpresentatie.pdf');
+});
+$('downloadInternal').addEventListener('click', () => {
+  if ($('downloadInternal').disabled) return;
+  download(internalFile(), 'ximo-intern-rapport.pdf');
+});
+$('downloadZip').addEventListener('click', () => {
+  if ($('downloadZip').disabled) return;
+  download(zipFiles([
+    {name:'ximo-klantpresentatie.pdf',data:createCustomerPdf(reports.customer)},
+    {name:'ximo-intern-rapport.pdf',data:createInternalPdf(reports.internal)}
+  ]),'ximo-quickscan-rapporten.zip');
+});
