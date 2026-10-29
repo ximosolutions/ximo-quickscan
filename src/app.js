@@ -70,6 +70,7 @@ function renderOpportunities() {
   const summary = document.createElement('p');
   summary.className = 'muted';
   summary.textContent = selectedCount + ' van 3–5 kansen geselecteerd · ' + session.opportunities.length + ' kansen beschikbaar';
+  $('selectionIndicator').textContent = selectedCount + ' van 5 kansen gekozen' + (selectedCount>=3&&selectedCount<=5?' · Klaar om door te gaan':' · Kies 3 tot 5');
   root.append(summary);
   session.opportunities.forEach((item,index) => {
     const card = document.createElement('article');
@@ -138,13 +139,18 @@ function renderOpportunities() {
   });
   const qa=checkOpportunities(session.opportunities);
   $('qa').replaceChildren();
-  for (const [kind,messages] of [['error',qa.errors],['warn',qa.warnings]]) {
-    for(const message of messages) {
-      const p=document.createElement('p');
-      p.className=kind;
-      p.textContent=message;
-      $('qa').append(p);
+  for (const message of qa.errors) {
+    const p=document.createElement('p');p.className='error';p.textContent=message;$('qa').append(p);
+  }
+  if(qa.warnings.length){
+    const details=document.createElement('details');details.className='qa-summary';
+    const summary=document.createElement('summary');
+    summary.textContent=qa.warnings.length+' aannames of aandachtspunten — klik om te bekijken';
+    details.append(summary);
+    for(const message of qa.warnings){
+      const p=document.createElement('p');p.textContent=message;details.append(p);
     }
+    $('qa').append(details);
   }
   $('toReports').disabled=qa.errors.length>0;
 }
