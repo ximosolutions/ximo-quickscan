@@ -113,6 +113,13 @@ function renderOpportunities() {
       button.addEventListener('click',()=>move(index,offset));
       controls.append(button);
     }
+    const removeQuick=document.createElement('button');
+    removeQuick.className='secondary compact remove-opportunity';
+    removeQuick.textContent='×';
+    removeQuick.title='Kans verwijderen';
+    removeQuick.setAttribute('aria-label','Verwijder kans: '+item.title);
+    removeQuick.addEventListener('click',()=>removeOpportunity(index));
+    controls.append(removeQuick);
     top.append(toggle,info,controls);
     card.append(top);
     if (expanded) {
@@ -131,7 +138,7 @@ function renderOpportunities() {
       const remove=document.createElement('button');
       remove.className='secondary';
       remove.textContent='Kans verwijderen';
-      remove.addEventListener('click',()=>{expandedOpportunityId=null;commit(session.opportunities.filter((_,i)=>i!==index));});
+      remove.addEventListener('click',()=>removeOpportunity(index));
       details.append(remove);
       card.append(details);
     }
@@ -153,6 +160,14 @@ function renderOpportunities() {
     $('qa').append(details);
   }
   $('toReports').disabled=qa.errors.length>0;
+}
+function removeOpportunity(index) {
+  const item=session.opportunities[index];
+  if (!item) return;
+  if (!window.confirm('Kans verwijderen: '+item.title+'? Deze actie kan niet ongedaan worden gemaakt.')) return;
+  expandedOpportunityId=null;
+  commit(session.opportunities.filter((_,i)=>i!==index));
+  setStatus('Kans verwijderd.','ok');
 }
 function update(index, key, value) {
   const items = session.opportunities.map((item,i) => i === index ? {...item,[key]:value} : item);
