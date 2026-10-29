@@ -136,12 +136,19 @@ function renderOpportunities() {
     if (expanded) {
       const details=document.createElement('div');
       details.className='opportunity-details';
+      const contentFields=document.createElement('div');
+      contentFields.className='opportunity-field-grid';
       for (const [key,name,multiline] of [
         ['title','Titel',false],['painPoint','Mogelijk pijnpunt',true],
         ['benefits','Verwacht voordeel',true],['impactSummary','Kwalitatieve impact',true],
         ['feasibilitySummary','Haalbaarheid',true],['verificationNote','Te verifiëren',true],
         ['internalSolution','Interne oplossingsrichting (niet klantgericht)',true]
-      ]) details.append(field(name,item[key],value=>update(index,key,value),multiline));
+      ]) {
+        const control=field(name,item[key],value=>update(index,key,value),multiline);
+        control.className='opportunity-field opportunity-field-'+key;
+        contentFields.append(control);
+      }
+      details.append(contentFields);
       const evidence=document.createElement('p');
       evidence.className='muted tiny';
       evidence.textContent='Onderbouwing: '+(item.evidenceType||'niet beoordeeld')+' · Bronnen: '+(item.sourceRefs?.length||0);
